@@ -135,7 +135,6 @@
     <None Include="packages.config" />
   </ItemGroup>
   <ItemGroup>
-    <Image Include="modern-tutorials-master-fcac904a6303ad5e575cb0541f9a5a33bae6f6ad\glescraft\textures.png" />
     <Image Include="textures.png" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
