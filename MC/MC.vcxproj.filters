@@ -13,6 +13,9 @@
       <UniqueIdentifier>{67DA6AB6-F800-4c08-8B7A-83BB121AAD01}</UniqueIdentifier>
       <Extensions>rc;ico;cur;bmp;dlg;rc2;rct;bin;rgs;gif;jpg;jpeg;jpe;resx;tiff;tif;png;wav;mfcribbon-ms</Extensions>
     </Filter>
+    <Filter Include="Layer">
+      <UniqueIdentifier>{fa4c98d8-1f55-424c-8be6-bcf2ce859106}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="camera.h">
@@ -33,16 +36,55 @@
     <ClInclude Include="stb_image_aug.h">
       <Filter>头文件</Filter>
     </ClInclude>
+    <ClInclude Include="noise.h">
+      <Filter>头文件</Filter>
+    </ClInclude>
+    <ClInclude Include="shader.h">
+      <Filter>头文件</Filter>
+    </ClInclude>
+    <ClInclude Include="genLayer.h">
+      <Filter>Layer</Filter>
+    </ClInclude>
+    <ClInclude Include="biome.h">
+      <Filter>头文件</Filter>
+    </ClInclude>
+    <ClInclude Include="block.h">
+      <Filter>头文件</Filter>
+    </ClInclude>
+    <ClInclude Include="chunk.h">
+      <Filter>头文件</Filter>
+    </ClInclude>
+    <ClInclude Include="generator.h">
+      <Filter>头文件</Filter>
+    </ClInclude>
+    <ClInclude Include="renderScene.h">
+      <Filter>头文件</Filter>
+    </ClInclude>
+    <ClInclude Include="stbi_DDS_aug.h">
+      <Filter>头文件</Filter>
+    </ClInclude>
+    <ClInclude Include="stbi_DDS_aug_c.h">
+      <Filter>头文件</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="glad.c">
       <Filter>源文件</Filter>
     </ClCompile>
+    <ClCompile Include="modern-tutorials-master-fcac904a6303ad5e575cb0541f9a5a33bae6f6ad\glescraft\textures.c">
+      <Filter>源文件</Filter>
+    </ClCompile>
+    <ClCompile Include="glcraft.cpp">
+      <Filter>源文件</Filter>
+    </ClCompile>
+    <ClCompile Include="genLayer.cpp">
+      <Filter>Layer</Filter>
+    </ClCompile>
     <ClCompile Include="modern-tutorials-master-fcac904a6303ad5e575cb0541f9a5a33bae6f6ad\glescraft\glescraft.cpp">
       <Filter>源文件</Filter>
     </ClCompile>
-    <ClCompile Include="modern-tutorials-master-fcac904a6303ad5e575cb0541f9a5a33bae6f6ad\glescraft\textures.c">
-      <Filter>源文件</Filter>
+    <ClCompile Include="stb_image_aug.c">
+      <Filter>头文件</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>
