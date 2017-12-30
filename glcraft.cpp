@@ -13,6 +13,7 @@
 #include <sstream>
 #include <time.h>
 #include <generator.h>
+#include <light.h>
 
 void framebuffer_size_callback(GLFWwindow* window, int width, int height);
 void mouse_callback(GLFWwindow* window, double xpos, double ypos);
@@ -36,10 +37,15 @@ float lastFrame = 0.0f;
 
 static GLuint program;
 const static GLint attribute_coord = 0;
+const static GLint normal_coord = 1;
 static GLint uniform_mvp;
 static GLuint texture;
 static GLint uniform_texture;
 static GLuint cursor_vbo;
+static GLint uniform_viewpos;
+static DirlightUniform uniform_dirlight;
+
+static DirectLight dirlight;
 
 static glm::vec3 position;
 static glm::vec3 fforward;
@@ -84,7 +90,7 @@ static const char *blocknames[16] = {
 struct byte4 {
 	uint8_t x, y, z, w;
 	byte4() {}
-	byte4(uint8_t x, uint8_t y, uint8_t z, uint8_t w) : x(x), y(y), z(z), w(w) {}
+	byte4(const uint8_t &x, const uint8_t &y, const uint8_t &z, const uint8_t &w) : x(x), y(y), z(z), w(w) {}
 };
 
 static struct chunk *chunk_slot[CHUNKSLOTS] = { 0 };
@@ -93,7 +99,7 @@ struct chunk {
 	int blk[CX][CY][CZ];
 	struct chunk *left, *right, *below, *above, *front, *back;
 	int slot;
-	GLuint vbo;
+	GLuint vbo, vbo_normal;
 	int elements;
 	time_t lastused;
 	bool changed;
@@ -310,9 +316,12 @@ struct chunk {
 
 	void update() {
 		byte4 vertex[CX * CY * CZ * 18];
+		//1 represent (1, 0, 0), 2 represent (0, 1, 0), 3 represent (0, 0, 1)
+		//-1 represent (-1, 0, 0), -2 represent (0, -1, 0), -3 represent (0, 0, -1)
+		GLfloat normal[CX * CY * CZ * 18];
 		int i = 0;
 		int merged = 0;
-		bool vis = false;;
+		bool vis = false;
 
 		// View from negative x
 
@@ -348,11 +357,17 @@ struct chunk {
 						// Otherwise, add a new quad.
 					}
 					else {
+						normal[i] = -1;
 						vertex[i++] = byte4(x, y, z, side);
+						normal[i] = -1;
 						vertex[i++] = byte4(x, y, z + 1, side);
+						normal[i] = -1;
 						vertex[i++] = byte4(x, y + 1, z, side);
+						normal[i] = -1;
 						vertex[i++] = byte4(x, y + 1, z, side);
+						normal[i] = -1;
 						vertex[i++] = byte4(x, y, z + 1, side);
+						normal[i] = -1;
 						vertex[i++] = byte4(x, y + 1, z + 1, side);
 					}
 
@@ -392,11 +407,17 @@ struct chunk {
 						merged++;
 					}
 					else {
+						normal[i] = 1;
 						vertex[i++] = byte4(x + 1, y, z, side);
+						normal[i] = 1;
 						vertex[i++] = byte4(x + 1, y + 1, z, side);
+						normal[i] = 1;
 						vertex[i++] = byte4(x + 1, y, z + 1, side);
+						normal[i] = 1;
 						vertex[i++] = byte4(x + 1, y + 1, z, side);
+						normal[i] = 1;
 						vertex[i++] = byte4(x + 1, y + 1, z + 1, side);
+						normal[i] = 1;
 						vertex[i++] = byte4(x + 1, y, z + 1, side);
 					}
 					vis = true;
@@ -434,11 +455,17 @@ struct chunk {
 						merged++;
 					}
 					else {
+						normal[i] = -2;
 						vertex[i++] = byte4(x, y, z, bottom + 128);
+						normal[i] = -2;
 						vertex[i++] = byte4(x + 1, y, z, bottom + 128);
+						normal[i] = -2;
 						vertex[i++] = byte4(x, y, z + 1, bottom + 128);
+						normal[i] = -2;
 						vertex[i++] = byte4(x + 1, y, z, bottom + 128);
+						normal[i] = -2;
 						vertex[i++] = byte4(x + 1, y, z + 1, bottom + 128);
+						normal[i] = -2;
 						vertex[i++] = byte4(x, y, z + 1, bottom + 128);
 					}
 					vis = true;
@@ -476,11 +503,17 @@ struct chunk {
 						merged++;
 					}
 					else {
+						normal[i] = 2;
 						vertex[i++] = byte4(x, y + 1, z, top + 128);
+						normal[i] = 2;
 						vertex[i++] = byte4(x, y + 1, z + 1, top + 128);
+						normal[i] = 2;
 						vertex[i++] = byte4(x + 1, y + 1, z, top + 128);
+						normal[i] = 2;
 						vertex[i++] = byte4(x + 1, y + 1, z, top + 128);
+						normal[i] = 2;
 						vertex[i++] = byte4(x, y + 1, z + 1, top + 128);
+						normal[i] = 2;
 						vertex[i++] = byte4(x + 1, y + 1, z + 1, top + 128);
 					}
 					vis = true;
@@ -519,11 +552,17 @@ struct chunk {
 						merged++;
 					}
 					else {
+						normal[i] = -3;
 						vertex[i++] = byte4(x, y, z, side);
+						normal[i] = -3;
 						vertex[i++] = byte4(x, y + 1, z, side);
+						normal[i] = -3;
 						vertex[i++] = byte4(x + 1, y, z, side);
+						normal[i] = -3;
 						vertex[i++] = byte4(x, y + 1, z, side);
+						normal[i] = -3;
 						vertex[i++] = byte4(x + 1, y + 1, z, side);
+						normal[i] = -3;
 						vertex[i++] = byte4(x + 1, y, z, side);
 					}
 					vis = true;
@@ -562,11 +601,17 @@ struct chunk {
 						merged++;
 					}
 					else {
+						normal[i] = 3;
 						vertex[i++] = byte4(x, y, z + 1, side);
+						normal[i] = 3;
 						vertex[i++] = byte4(x + 1, y, z + 1, side);
+						normal[i] = 3;
 						vertex[i++] = byte4(x, y + 1, z + 1, side);
+						normal[i] = 3;
 						vertex[i++] = byte4(x, y + 1, z + 1, side);
+						normal[i] = 3;
 						vertex[i++] = byte4(x + 1, y, z + 1, side);
+						normal[i] = 3;
 						vertex[i++] = byte4(x + 1, y + 1, z + 1, side);
 					}
 					vis = true;
@@ -598,10 +643,12 @@ struct chunk {
 			// If the slot is empty, create a new VBO
 			if (!chunk_slot[lru]) {
 				glGenBuffers(1, &vbo);
+				glGenBuffers(1, &vbo_normal);
 				// Otherwise, steal it from the previous slot owner
 			}
 			else {
 				vbo = chunk_slot[lru]->vbo;
+				vbo_normal = chunk_slot[lru]->vbo_normal;
 				chunk_slot[lru]->changed = true;
 			}
 
@@ -613,6 +660,8 @@ struct chunk {
 
 		glBindBuffer(GL_ARRAY_BUFFER, vbo);
 		glBufferData(GL_ARRAY_BUFFER, i * sizeof *vertex, vertex, GL_STATIC_DRAW);
+		glBindBuffer(GL_ARRAY_BUFFER, vbo_normal);
+		glBufferData(GL_ARRAY_BUFFER, i * sizeof *normal, normal, GL_STATIC_DRAW);
 	}
 
 	void render() {
@@ -625,7 +674,11 @@ struct chunk {
 			return;
 
 		glBindBuffer(GL_ARRAY_BUFFER, vbo);
+		glEnableVertexAttribArray(attribute_coord);
 		glVertexAttribPointer(attribute_coord, 4, GL_BYTE, GL_FALSE, 0, 0);
+		glBindBuffer(GL_ARRAY_BUFFER, vbo_normal);
+		glEnableVertexAttribArray(normal_coord);
+		glVertexAttribPointer(normal_coord, 1, GL_FLOAT, GL_FALSE, 0, 0);
 		glDrawArrays(GL_TRIANGLES, 0, elements);
 	}
 };
@@ -911,8 +964,19 @@ int main()
 		return 0;
 
 	uniform_mvp = get_uniform(program, "mvp");
+	uniform_viewpos = get_uniform(program, "viewPos");
+	uniform_dirlight.direction = get_uniform(program, "dirlight.direction");
+	uniform_dirlight.ambient = get_uniform(program, "dirlight.ambient");
+	uniform_dirlight.diffuse = get_uniform(program, "dirlight.diffuse");
+	uniform_dirlight.specular = get_uniform(program, "dirlight.specular");
 
-	if (attribute_coord == -1 || uniform_mvp == -1)
+	dirlight.ambient = glm::vec3(0.2f);
+	dirlight.diffuse = glm::vec3(0.8f);
+	dirlight.specular = glm::vec3(0.81f);
+
+	if (uniform_mvp == -1 || uniform_viewpos == -1 ||
+		uniform_dirlight.direction == -1 || uniform_dirlight.ambient == -1 ||
+		uniform_dirlight.diffuse == -1 || uniform_dirlight.specular == -1)
 		return 0;
 
 	/* Create and upload the texture */
@@ -994,11 +1058,16 @@ int main()
 		glm::mat4 mvp = projection * view;
 
 		glUniformMatrix4fv(uniform_mvp, 1, GL_FALSE, glm::value_ptr(mvp));
+		glUniform3f(uniform_viewpos, camera.Position.x, camera.Position.y, camera.Position.z);
+		dirlight.direction = glm::vec3(-1);
+		dirlight.UniformSet(uniform_dirlight);
 
 		glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 		glUseProgram(program);
 		glEnable(GL_DEPTH_TEST);
 		glEnable(GL_POLYGON_OFFSET_FILL);
+		glEnable(GL_BLEND);
+		glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
 
 		/* Then draw chunks */
 
