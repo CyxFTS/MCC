@@ -20,7 +20,7 @@ float ShadowCalculation(vec4 fragPosLightSpace, vec3 normal, vec3 direction, vec
 	vec3 projCoord = fragPosLightSpace.xyz / fragPosLightSpace.w;
 	projCoord = projCoord * 0.5 + 0.5;
 	float currentDepth = projCoord.z > 1 ? 0 : projCoord.z;
-	float bias = max(0.0002 * (1 - dot(normal, direction)), 0.00002);
+	float bias = max(0.0001 * (1 - dot(normal, direction)), 0.00001);
 	float shadowCal = 0;
 	for(int x = -1; x <= 1; ++x){
 		for(int y = -1; y <= 1; ++y){

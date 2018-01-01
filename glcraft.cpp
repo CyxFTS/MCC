@@ -1054,7 +1054,7 @@ int main()
 	//create depth texture
 	GLuint depthMapFBO;
 	glGenFramebuffers(1, &depthMapFBO);
-	const GLuint SHADOW_WIDTH = 4096, SHADOW_HEIGHT = 4096;
+	const GLuint SHADOW_WIDTH = 5000, SHADOW_HEIGHT = 5000;
 	GLuint depthMap;
 	glGenTextures(1, &depthMap);
 	glBindTexture(GL_TEXTURE_2D, depthMap);
@@ -1101,7 +1101,7 @@ int main()
 		glUniform3f(uniform_viewpos, camera.Position.x, camera.Position.y, camera.Position.z);
 		dirlight.direction = glm::vec3(-1);
 		dirlight.UniformSet(uniform_dirlight);
-		glm::mat4 lightProjection = glm::ortho(-100.0f, 100.0f, -100.0f, 100.0f, 0.1f, 100.0f);
+		glm::mat4 lightProjection = glm::ortho(-50.0f, 50.0f, -50.0f, 50.0f, 0.1f, 80.0f);
 		glm::vec3 lightPos = glm::normalize(-dirlight.direction);
 		lightPos *= 50;
 		glm::vec3 lookAtCenter = camera.Front;
