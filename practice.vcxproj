@@ -157,6 +157,7 @@
     <ClInclude Include="chunk.h" />
     <ClInclude Include="generator.h" />
     <ClInclude Include="genLayer.h" />
+    <ClInclude Include="light.h" />
     <ClInclude Include="noise.h" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />

@@ -36,6 +36,8 @@ float deltaTime = 0.0f;	// time between current frame and last frame
 float lastFrame = 0.0f;
 
 static GLuint program;
+static GLuint depthProgram;
+static GLuint depthTestProgram;
 const static GLint attribute_coord = 0;
 const static GLint normal_coord = 1;
 static GLint uniform_mvp;
@@ -44,6 +46,9 @@ static GLint uniform_texture;
 static GLuint cursor_vbo;
 static GLint uniform_viewpos;
 static DirlightUniform uniform_dirlight;
+static GLint uniform_lightspacematrix_normal;
+static GLint uniform_lightspacematrix_depth;
+static GLint uniform_shadow;
 
 static DirectLight dirlight;
 
@@ -734,7 +739,7 @@ struct superchunk {
 		c[cx][cy][cz]->set(x & (CX - 1), y & (CY - 1), z & (CZ - 1), type);
 	}
 
-	void render(const glm::mat4 &pv) {
+	void render(const glm::mat4 &pv, const glm::mat4 &lightSpaceMatrix, const int &whichprogram) {
 		float ud = 1 >> 32;
 		int ux = -1;
 		int uy = -1;
@@ -745,6 +750,7 @@ struct superchunk {
 				for (int z = 0; z < SCZ; z++) {
 					glm::mat4 model = glm::translate(glm::mat4(1.0f), glm::vec3(c[x][y][z]->ax * CX, c[x][y][z]->ay * CY, c[x][y][z]->az * CZ));
 					glm::mat4 mvp = pv * model;
+					glm::mat4 LSM = lightSpaceMatrix * model;
 
 					// Is this chunk on the screen?
 					glm::vec4 center = mvp * glm::vec4(CX / 2, CY / 2, CZ / 2, 1);
@@ -773,7 +779,12 @@ struct superchunk {
 						continue;
 					}
 
-					glUniformMatrix4fv(uniform_mvp, 1, GL_FALSE, glm::value_ptr(mvp));
+					if (whichprogram == 0) {
+						glUniformMatrix4fv(uniform_mvp, 1, GL_FALSE, glm::value_ptr(mvp));
+						glUniformMatrix4fv(uniform_lightspacematrix_normal, 1, GL_FALSE, glm::value_ptr(LSM));
+					}else
+					if (whichprogram == 1)
+						glUniformMatrix4fv(uniform_lightspacematrix_depth, 1, GL_FALSE, glm::value_ptr(LSM));
 
 					c[x][y][z]->render();
 				}
@@ -957,14 +968,20 @@ int main()
 	// build and compile our shader zprogram
 	// ------------------------------------
 	program = create_program("glcraft.vert", "glcraft.frag");
-	glUseProgram(program);
-
-
-	if (program == 0)
+	depthProgram = create_program("simple.vert", "simple.frag");
+	depthTestProgram = create_program("simpleTexture.vert", "simpleTexture.frag");
+	if (program == 0 || depthProgram == 0)
 		return 0;
 
+	glUseProgram(depthProgram);
+	uniform_lightspacematrix_depth = get_uniform(depthProgram, "lightSpaceMatrix");
+
+	glUseProgram(program);
 	uniform_mvp = get_uniform(program, "mvp");
 	uniform_viewpos = get_uniform(program, "viewPos");
+	uniform_lightspacematrix_normal = get_uniform(program, "lightSpaceMatrix");
+	uniform_texture = get_uniform(program, "texture");
+	uniform_shadow = get_uniform(program, "shadow");
 	uniform_dirlight.direction = get_uniform(program, "dirlight.direction");
 	uniform_dirlight.ambient = get_uniform(program, "dirlight.ambient");
 	uniform_dirlight.diffuse = get_uniform(program, "dirlight.diffuse");
@@ -1025,6 +1042,7 @@ int main()
 	glPolygonOffset(1, 1);
 
 	glEnableVertexAttribArray(attribute_coord);
+	glEnableVertexAttribArray(normal_coord);
 
 	unsigned int VAO;
 	glGenVertexArrays(1, &VAO);
@@ -1032,6 +1050,31 @@ int main()
 	glBindVertexArray(VAO);
 
 	glEnableVertexAttribArray(0);
+
+	//create depth texture
+	GLuint depthMapFBO;
+	glGenFramebuffers(1, &depthMapFBO);
+	const GLuint SHADOW_WIDTH = 4096, SHADOW_HEIGHT = 4096;
+	GLuint depthMap;
+	glGenTextures(1, &depthMap);
+	glBindTexture(GL_TEXTURE_2D, depthMap);
+	glTexImage2D(GL_TEXTURE_2D, 0, GL_DEPTH_COMPONENT, SHADOW_WIDTH, SHADOW_HEIGHT, 0, GL_DEPTH_COMPONENT, GL_FLOAT, NULL);
+	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
+	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
+	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_BORDER);
+	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_BORDER);
+	GLfloat borderColor[] = { 1.0, 1.0, 1.0, 1.0 };
+	glTexParameterfv(GL_TEXTURE_2D, GL_TEXTURE_BORDER_COLOR, borderColor);
+
+	glBindFramebuffer(GL_FRAMEBUFFER, depthMapFBO);
+	glFramebufferTexture2D(GL_FRAMEBUFFER, GL_DEPTH_ATTACHMENT, GL_TEXTURE_2D, depthMap, 0);
+	glDrawBuffer(GL_NONE);
+	glReadBuffer(GL_NONE);
+	glBindFramebuffer(GL_FRAMEBUFFER, 0);
+
+	glActiveTexture(GL_TEXTURE0);
+	glUniform1i(uniform_texture, 0);
+	glBindTexture(GL_TEXTURE_2D, texture);
 
 	// render loop
 	// -----------
@@ -1051,27 +1094,82 @@ int main()
 
 		// pass projection matrix to shader (note that in this case it could change every frame)
 		glm::mat4 projection = glm::perspective(glm::radians(camera.Zoom), (float)SCR_WIDTH / (float)SCR_HEIGHT, 0.1f, 100.0f);
-
 		// camera/view transformation
 		glm::mat4 view = camera.GetViewMatrix();
+		glm::mat4 pv = projection * view;
 
-		glm::mat4 mvp = projection * view;
-
-		glUniformMatrix4fv(uniform_mvp, 1, GL_FALSE, glm::value_ptr(mvp));
 		glUniform3f(uniform_viewpos, camera.Position.x, camera.Position.y, camera.Position.z);
 		dirlight.direction = glm::vec3(-1);
 		dirlight.UniformSet(uniform_dirlight);
+		glm::mat4 lightProjection = glm::ortho(-100.0f, 100.0f, -100.0f, 100.0f, 0.1f, 100.0f);
+		glm::vec3 lightPos = glm::normalize(-dirlight.direction);
+		lightPos *= 50;
+		glm::vec3 lookAtCenter = camera.Front;
+		lookAtCenter *= 50;
+		lookAtCenter += camera.Position;
+		lightPos += lookAtCenter;
+		glm::mat4 lightView = glm::lookAt(lightPos, lookAtCenter, glm::vec3(0, 1, 0));
+		glm::mat4 lightSpaceMatrix = lightProjection * lightView;
 
+		glBindFramebuffer(GL_FRAMEBUFFER, depthMapFBO);
+		glViewport(0, 0, SHADOW_WIDTH, SHADOW_HEIGHT);
+		glClear(GL_DEPTH_BUFFER_BIT);
+		glUseProgram(depthProgram);
+		glEnable(GL_DEPTH_TEST);
+		glEnable(GL_CULL_FACE);
+		glDisable(GL_BLEND);
+		glDisable(GL_POLYGON_OFFSET_FILL);
+		glCullFace(GL_FRONT);
+
+		world->render(lightSpaceMatrix, lightSpaceMatrix, 1);
+
+		glBindFramebuffer(GL_FRAMEBUFFER, 0);
+		glViewport(0, 0, SCR_WIDTH, SCR_HEIGHT);
 		glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 		glUseProgram(program);
 		glEnable(GL_DEPTH_TEST);
 		glEnable(GL_POLYGON_OFFSET_FILL);
+		glDisable(GL_CULL_FACE);
 		glEnable(GL_BLEND);
 		glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
 
+
+		//depth texture test
+		/*glUseProgram(depthTestProgram);
+		glActiveTexture(GL_TEXTURE0);
+		glBindTexture(GL_TEXTURE_2D, depthMap);
+		GLuint VAO, VBO, EBO;
+		glGenVertexArrays(1, &VAO);
+		glGenBuffers(1, &VBO);
+		glGenBuffers(1, &EBO);
+		glBindVertexArray(VAO);
+		glBindBuffer(GL_ARRAY_BUFFER, VBO);
+		GLfloat vertices[] = {
+		-1, -1,  0,  0,  0,
+		1, -1,  0,  1,  0,
+		-1,  1,  0,  0,  1,
+		1,  1,  0,  1,  1
+		};
+		GLuint indices[] = {
+		0, 1, 2, 1, 2, 3
+		};
+
+		glBufferData(GL_ARRAY_BUFFER, sizeof(vertices), vertices, GL_STATIC_DRAW);
+		glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, EBO);
+		glBufferData(GL_ELEMENT_ARRAY_BUFFER, sizeof(indices), indices, GL_STATIC_DRAW);
+		glEnableVertexAttribArray(0);
+		glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 5 * sizeof(GLfloat), 0);
+		glEnableVertexAttribArray(1);
+		glVertexAttribPointer(1, 2, GL_FLOAT, GL_FALSE, 5 * sizeof(GLfloat), (void*)(3 * sizeof(GLfloat)));
+		glDrawElements(GL_TRIANGLES, 6, GL_UNSIGNED_INT, NULL);
+		glBindVertexArray(0);*/
+
 		/* Then draw chunks */
 
-		world->render(mvp);
+		glActiveTexture(GL_TEXTURE1);
+		glUniform1i(uniform_shadow, 1);
+		glBindTexture(GL_TEXTURE_2D, depthMap);
+		world->render(pv, lightSpaceMatrix, 0);
 
 		/* At which voxel are we looking? */
 
@@ -1201,7 +1299,7 @@ int main()
 
 		glDisable(GL_POLYGON_OFFSET_FILL);
 		glDisable(GL_CULL_FACE);
-		glUniformMatrix4fv(uniform_mvp, 1, GL_FALSE, glm::value_ptr(mvp));
+		glUniformMatrix4fv(uniform_mvp, 1, GL_FALSE, glm::value_ptr(pv));
 		glBindBuffer(GL_ARRAY_BUFFER, cursor_vbo);
 		glBufferData(GL_ARRAY_BUFFER, sizeof box, box, GL_DYNAMIC_DRAW);
 		glVertexAttribPointer(attribute_coord, 4, GL_FLOAT, GL_FALSE, 0, 0);
