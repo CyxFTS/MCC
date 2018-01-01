@@ -989,7 +989,7 @@ int main()
 
 	dirlight.ambient = glm::vec3(0.2f);
 	dirlight.diffuse = glm::vec3(0.8f);
-	dirlight.specular = glm::vec3(0.81f);
+	dirlight.specular = glm::vec3(.0f);
 
 	if (uniform_mvp == -1 || uniform_viewpos == -1 ||
 		uniform_dirlight.direction == -1 || uniform_dirlight.ambient == -1 ||
@@ -1099,7 +1099,7 @@ int main()
 		glm::mat4 pv = projection * view;
 
 		glUniform3f(uniform_viewpos, camera.Position.x, camera.Position.y, camera.Position.z);
-		dirlight.direction = glm::vec3(-1);
+		dirlight.direction = glm::vec3(-1,-2,-1);
 		dirlight.UniformSet(uniform_dirlight);
 		glm::mat4 lightProjection = glm::ortho(-50.0f, 50.0f, -50.0f, 50.0f, 0.1f, 80.0f);
 		glm::vec3 lightPos = glm::normalize(-dirlight.direction);
@@ -1116,10 +1116,10 @@ int main()
 		glClear(GL_DEPTH_BUFFER_BIT);
 		glUseProgram(depthProgram);
 		glEnable(GL_DEPTH_TEST);
-		glEnable(GL_CULL_FACE);
+		//glEnable(GL_CULL_FACE);
 		glDisable(GL_BLEND);
 		glDisable(GL_POLYGON_OFFSET_FILL);
-		glCullFace(GL_FRONT);
+		//glCullFace(GL_FRONT);
 
 		world->render(lightSpaceMatrix, lightSpaceMatrix, 1);
 
@@ -1303,7 +1303,7 @@ int main()
 		glBindBuffer(GL_ARRAY_BUFFER, cursor_vbo);
 		glBufferData(GL_ARRAY_BUFFER, sizeof box, box, GL_DYNAMIC_DRAW);
 		glVertexAttribPointer(attribute_coord, 4, GL_FLOAT, GL_FALSE, 0, 0);
-		glDrawArrays(GL_LINES, 0, 24);
+		//glDrawArrays(GL_LINES, 0, 24);
 
 		/* Draw a cross in the center of the screen */
 
@@ -1324,7 +1324,7 @@ int main()
 		glfwSwapBuffers(window);
 		glfwPollEvents();
 	}
-
+	
 	// glfw: terminate, clearing all previously allocated GLFW resources.
 	// ------------------------------------------------------------------
 	glfwTerminate();

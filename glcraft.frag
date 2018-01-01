@@ -20,15 +20,16 @@ float ShadowCalculation(vec4 fragPosLightSpace, vec3 normal, vec3 direction, vec
 	vec3 projCoord = fragPosLightSpace.xyz / fragPosLightSpace.w;
 	projCoord = projCoord * 0.5 + 0.5;
 	float currentDepth = projCoord.z > 1 ? 0 : projCoord.z;
-	float bias = max(0.0001 * (1 - dot(normal, direction)), 0.00001);
-	float shadowCal = 0;
-	for(int x = -1; x <= 1; ++x){
-		for(int y = -1; y <= 1; ++y){
-			float closetDepth = texture2D(shadow, projCoord.xy + vec2(x, y) * pixelSize).r;
-			shadowCal += currentDepth - bias > closetDepth ? 1 : 0;
-		}
-	}
-	return shadowCal / 9.0;
+	float bias = 0.0008;//max(0.0001 * (1 - dot(normal, direction)), 0.000001);
+	float shadowCal = currentDepth - bias >texture2D(shadow, projCoord.xy).r ? 1 : 0;//= 0;
+	// for(int x = -1; x <= 1; ++x){
+	// 	for(int y = -1; y <= 1; ++y){
+	// 		float closetDepth = texture2D(shadow, projCoord.xy + vec2(x, y) * pixelSize).r;
+	// 		shadowCal += currentDepth - bias > closetDepth ? 1 : 0;
+	// 	}
+	// }
+	// return shadowCal / 9.0;
+	return shadowCal;
 }
 
 vec3 CalcDirLight(DirLight light, vec3 normal, vec3 viewDir, vec3 texColor, vec3 texSpec, float shininess){
