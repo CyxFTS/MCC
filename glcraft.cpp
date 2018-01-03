@@ -40,9 +40,11 @@ static GLuint depthProgram;
 static GLuint depthTestProgram;
 const static GLint attribute_coord = 0;
 const static GLint normal_coord = 1;
+const static GLint tangent_coord = 2;
+const static GLint bitangent_coord = 3;
 static GLint uniform_mvp;
-static GLuint texture;
-static GLint uniform_texture;
+static GLuint texture, normalMap;
+static GLint uniform_texture, uniform_normalMap;
 static GLuint cursor_vbo;
 static GLint uniform_viewpos;
 static DirlightUniform uniform_dirlight;
@@ -104,7 +106,7 @@ struct chunk {
 	int blk[CX][CY][CZ];
 	struct chunk *left, *right, *below, *above, *front, *back;
 	int slot;
-	GLuint vbo, vbo_normal;
+	GLuint vbo, vbo_normal,vbo_tangent,vbo_bitangent;
 	int elements;
 	time_t lastused;
 	bool changed;
@@ -324,6 +326,8 @@ struct chunk {
 		//1 represent (1, 0, 0), 2 represent (0, 1, 0), 3 represent (0, 0, 1)
 		//-1 represent (-1, 0, 0), -2 represent (0, -1, 0), -3 represent (0, 0, -1)
 		GLfloat normal[CX * CY * CZ * 18];
+		glm::vec3 tangent[CX * CY * CZ * 18];
+		glm::vec3 bitangent[CX * CY * CZ * 18];
 		int i = 0;
 		int merged = 0;
 		bool vis = false;
@@ -362,18 +366,78 @@ struct chunk {
 						// Otherwise, add a new quad.
 					}
 					else {
+						glm::vec3 pos1(x, y, z + 1);
+						glm::vec3 pos2(x, y, z);
+						glm::vec3 pos3(x, y + 1, z);
+						glm::vec3 pos4(x, y + 1, z + 1);
+
+						glm::vec2 uv1((0 + side) / 16.0, 1);
+						glm::vec2 uv2((0 + side) / 16.0, 0);
+						glm::vec2 uv3((1 + side) / 16.0, 0);
+						glm::vec2 uv4((1 + side) / 16.0, 1);
+						glm::vec3 nm(-1.0f, 0.0f, 0.0f);
+
+						// calculate tangent/bitangent vectors of both triangles
+						glm::vec3 tangent1, bitangent1;
+						glm::vec3 tangent2, bitangent2;
+						// triangle 1
+						// ----------
+						glm::vec3 edge1 = pos2 - pos1;
+						glm::vec3 edge2 = pos3 - pos1;
+						glm::vec2 deltaUV1 = uv2 - uv1;
+						glm::vec2 deltaUV2 = uv3 - uv1;
+
+						GLfloat f = 1.0f / (deltaUV1.x * deltaUV2.y - deltaUV2.x * deltaUV1.y);
+
+						tangent1.x = f * (deltaUV2.y * edge1.x - deltaUV1.y * edge2.x);
+						tangent1.y = f * (deltaUV2.y * edge1.y - deltaUV1.y * edge2.y);
+						tangent1.z = f * (deltaUV2.y * edge1.z - deltaUV1.y * edge2.z);
+						tangent1 = glm::normalize(tangent1);
+
+						bitangent1.x = f * (-deltaUV2.x * edge1.x + deltaUV1.x * edge2.x);
+						bitangent1.y = f * (-deltaUV2.x * edge1.y + deltaUV1.x * edge2.y);
+						bitangent1.z = f * (-deltaUV2.x * edge1.z + deltaUV1.x * edge2.z);
+						bitangent1 = glm::normalize(bitangent1);
+
+						// triangle 2
+						// ----------
+						edge1 = pos3 - pos1;
+						edge2 = pos4 - pos1;
+						deltaUV1 = uv3 - uv1;
+						deltaUV2 = uv4 - uv1;
+
+						f = 1.0f / (deltaUV1.x * deltaUV2.y - deltaUV2.x * deltaUV1.y);
+
+						tangent2.x = f * (deltaUV2.y * edge1.x - deltaUV1.y * edge2.x);
+						tangent2.y = f * (deltaUV2.y * edge1.y - deltaUV1.y * edge2.y);
+						tangent2.z = f * (deltaUV2.y * edge1.z - deltaUV1.y * edge2.z);
+						tangent2 = glm::normalize(tangent2);
+
+
+						bitangent2.x = f * (-deltaUV2.x * edge1.x + deltaUV1.x * edge2.x);
+						bitangent2.y = f * (-deltaUV2.x * edge1.y + deltaUV1.x * edge2.y);
+						bitangent2.z = f * (-deltaUV2.x * edge1.z + deltaUV1.x * edge2.z);
+						bitangent2 = glm::normalize(bitangent2);
+
 						normal[i] = -1;
+						tangent[i] = tangent1;
 						vertex[i++] = byte4(x, y, z, side);
 						normal[i] = -1;
+						tangent[i] = tangent1;
 						vertex[i++] = byte4(x, y, z + 1, side);
 						normal[i] = -1;
+						tangent[i] = tangent1;
 						vertex[i++] = byte4(x, y + 1, z, side);
 						normal[i] = -1;
+						tangent[i] = tangent2;
 						vertex[i++] = byte4(x, y + 1, z, side);
 						normal[i] = -1;
+						tangent[i] = tangent2;
 						vertex[i++] = byte4(x, y, z + 1, side);
 						normal[i] = -1;
+						tangent[i] = tangent2;
 						vertex[i++] = byte4(x, y + 1, z + 1, side);
+						
 					}
 
 					vis = true;
@@ -412,17 +476,76 @@ struct chunk {
 						merged++;
 					}
 					else {
+						glm::vec3 pos1(x+1, y, z + 1);
+						glm::vec3 pos2(x+1, y, z);
+						glm::vec3 pos3(x+1, y + 1, z);
+						glm::vec3 pos4(x+1, y + 1, z + 1);
+
+						glm::vec2 uv1((0 + side) / 16.0, 1);
+						glm::vec2 uv2((0 + side) / 16.0, 0);
+						glm::vec2 uv3((1 + side) / 16.0, 0);
+						glm::vec2 uv4((1 + side) / 16.0, 1);
+						glm::vec3 nm(1.0f, 0.0f, 0.0f);
+
+						// calculate tangent/bitangent vectors of both triangles
+						glm::vec3 tangent1, bitangent1;
+						glm::vec3 tangent2, bitangent2;
+						// triangle 1
+						// ----------
+						glm::vec3 edge1 = pos2 - pos1;
+						glm::vec3 edge2 = pos3 - pos1;
+						glm::vec2 deltaUV1 = uv2 - uv1;
+						glm::vec2 deltaUV2 = uv3 - uv1;
+
+						GLfloat f = 1.0f / (deltaUV1.x * deltaUV2.y - deltaUV2.x * deltaUV1.y);
+
+						tangent1.x = f * (deltaUV2.y * edge1.x - deltaUV1.y * edge2.x);
+						tangent1.y = f * (deltaUV2.y * edge1.y - deltaUV1.y * edge2.y);
+						tangent1.z = f * (deltaUV2.y * edge1.z - deltaUV1.y * edge2.z);
+						tangent1 = glm::normalize(tangent1);
+
+						bitangent1.x = f * (-deltaUV2.x * edge1.x + deltaUV1.x * edge2.x);
+						bitangent1.y = f * (-deltaUV2.x * edge1.y + deltaUV1.x * edge2.y);
+						bitangent1.z = f * (-deltaUV2.x * edge1.z + deltaUV1.x * edge2.z);
+						bitangent1 = glm::normalize(bitangent1);
+
+						// triangle 2
+						// ----------
+						edge1 = pos3 - pos1;
+						edge2 = pos4 - pos1;
+						deltaUV1 = uv3 - uv1;
+						deltaUV2 = uv4 - uv1;
+
+						f = 1.0f / (deltaUV1.x * deltaUV2.y - deltaUV2.x * deltaUV1.y);
+
+						tangent2.x = f * (deltaUV2.y * edge1.x - deltaUV1.y * edge2.x);
+						tangent2.y = f * (deltaUV2.y * edge1.y - deltaUV1.y * edge2.y);
+						tangent2.z = f * (deltaUV2.y * edge1.z - deltaUV1.y * edge2.z);
+						tangent2 = glm::normalize(tangent2);
+
+
+						bitangent2.x = f * (-deltaUV2.x * edge1.x + deltaUV1.x * edge2.x);
+						bitangent2.y = f * (-deltaUV2.x * edge1.y + deltaUV1.x * edge2.y);
+						bitangent2.z = f * (-deltaUV2.x * edge1.z + deltaUV1.x * edge2.z);
+						bitangent2 = glm::normalize(bitangent2);
+
 						normal[i] = 1;
+						tangent[i] = tangent1;
 						vertex[i++] = byte4(x + 1, y, z, side);
 						normal[i] = 1;
+						tangent[i] = tangent1;
 						vertex[i++] = byte4(x + 1, y + 1, z, side);
 						normal[i] = 1;
+						tangent[i] = tangent1;
 						vertex[i++] = byte4(x + 1, y, z + 1, side);
 						normal[i] = 1;
+						tangent[i] = tangent2;
 						vertex[i++] = byte4(x + 1, y + 1, z, side);
 						normal[i] = 1;
+						tangent[i] = tangent2;
 						vertex[i++] = byte4(x + 1, y + 1, z + 1, side);
 						normal[i] = 1;
+						tangent[i] = tangent2;
 						vertex[i++] = byte4(x + 1, y, z + 1, side);
 					}
 					vis = true;
@@ -460,17 +583,75 @@ struct chunk {
 						merged++;
 					}
 					else {
+						glm::vec3 pos1(x + 1, y, z);
+						glm::vec3 pos2(x, y, z);
+						glm::vec3 pos3(x, y, z + 1);
+						glm::vec3 pos4(x + 1, y, z + 1);
+
+						glm::vec2 uv1((1 + bottom) / 16.0, 0);
+						glm::vec2 uv2((0 + bottom) / 16.0, 0);
+						glm::vec2 uv3((0 + bottom) / 16.0, 1);
+						glm::vec2 uv4((1 + bottom) / 16.0, 1);
+						glm::vec3 nm(0.0f ,-1.0f, 0.0f);
+
+						// calculate tangent/bitangent vectors of both triangles
+						glm::vec3 tangent1, bitangent1;
+						glm::vec3 tangent2, bitangent2;
+						// triangle 1
+						// ----------
+						glm::vec3 edge1 = pos2 - pos1;
+						glm::vec3 edge2 = pos3 - pos1;
+						glm::vec2 deltaUV1 = uv2 - uv1;
+						glm::vec2 deltaUV2 = uv3 - uv1;
+
+						GLfloat f = 1.0f / (deltaUV1.x * deltaUV2.y - deltaUV2.x * deltaUV1.y);
+
+						tangent1.x = f * (deltaUV2.y * edge1.x - deltaUV1.y * edge2.x);
+						tangent1.y = f * (deltaUV2.y * edge1.y - deltaUV1.y * edge2.y);
+						tangent1.z = f * (deltaUV2.y * edge1.z - deltaUV1.y * edge2.z);
+						tangent1 = glm::normalize(tangent1);
+
+						bitangent1.x = f * (-deltaUV2.x * edge1.x + deltaUV1.x * edge2.x);
+						bitangent1.y = f * (-deltaUV2.x * edge1.y + deltaUV1.x * edge2.y);
+						bitangent1.z = f * (-deltaUV2.x * edge1.z + deltaUV1.x * edge2.z);
+						bitangent1 = glm::normalize(bitangent1);
+
+						// triangle 2
+						// ----------
+						edge1 = pos3 - pos1;
+						edge2 = pos4 - pos1;
+						deltaUV1 = uv3 - uv1;
+						deltaUV2 = uv4 - uv1;
+
+						f = 1.0f / (deltaUV1.x * deltaUV2.y - deltaUV2.x * deltaUV1.y);
+
+						tangent2.x = f * (deltaUV2.y * edge1.x - deltaUV1.y * edge2.x);
+						tangent2.y = f * (deltaUV2.y * edge1.y - deltaUV1.y * edge2.y);
+						tangent2.z = f * (deltaUV2.y * edge1.z - deltaUV1.y * edge2.z);
+						tangent2 = glm::normalize(tangent2);
+
+
+						bitangent2.x = f * (-deltaUV2.x * edge1.x + deltaUV1.x * edge2.x);
+						bitangent2.y = f * (-deltaUV2.x * edge1.y + deltaUV1.x * edge2.y);
+						bitangent2.z = f * (-deltaUV2.x * edge1.z + deltaUV1.x * edge2.z);
+						bitangent2 = glm::normalize(bitangent2);
 						normal[i] = -2;
+						tangent[i] = tangent1;
 						vertex[i++] = byte4(x, y, z, bottom + 128);
 						normal[i] = -2;
+						tangent[i] = tangent1;
 						vertex[i++] = byte4(x + 1, y, z, bottom + 128);
 						normal[i] = -2;
+						tangent[i] = tangent1;
 						vertex[i++] = byte4(x, y, z + 1, bottom + 128);
 						normal[i] = -2;
+						tangent[i] = tangent2;
 						vertex[i++] = byte4(x + 1, y, z, bottom + 128);
 						normal[i] = -2;
+						tangent[i] = tangent2;
 						vertex[i++] = byte4(x + 1, y, z + 1, bottom + 128);
 						normal[i] = -2;
+						tangent[i] = tangent2;
 						vertex[i++] = byte4(x, y, z + 1, bottom + 128);
 					}
 					vis = true;
@@ -508,17 +689,75 @@ struct chunk {
 						merged++;
 					}
 					else {
+						glm::vec3 pos1(x, y + 1, z + 1);
+						glm::vec3 pos2(x, y + 1, z);
+						glm::vec3 pos3(x + 1, y + 1, z);
+						glm::vec3 pos4(x + 1, y + 1, z + 1);
+
+						glm::vec2 uv1((0 + top) / 16.0, 1);
+						glm::vec2 uv2((0 + top) / 16.0, 0);
+						glm::vec2 uv3((1 + top) / 16.0, 0);
+						glm::vec2 uv4((1 + top) / 16.0, 1);
+						glm::vec3 nm(0.0f, 1.0f, 0.0f);
+
+						// calculate tangent/bitangent vectors of both triangles
+						glm::vec3 tangent1, bitangent1;
+						glm::vec3 tangent2, bitangent2;
+						// triangle 1
+						// ----------
+						glm::vec3 edge1 = pos2 - pos1;
+						glm::vec3 edge2 = pos3 - pos1;
+						glm::vec2 deltaUV1 = uv2 - uv1;
+						glm::vec2 deltaUV2 = uv3 - uv1;
+
+						GLfloat f = 1.0f / (deltaUV1.x * deltaUV2.y - deltaUV2.x * deltaUV1.y);
+
+						tangent1.x = f * (deltaUV2.y * edge1.x - deltaUV1.y * edge2.x);
+						tangent1.y = f * (deltaUV2.y * edge1.y - deltaUV1.y * edge2.y);
+						tangent1.z = f * (deltaUV2.y * edge1.z - deltaUV1.y * edge2.z);
+						tangent1 = glm::normalize(tangent1);
+
+						bitangent1.x = f * (-deltaUV2.x * edge1.x + deltaUV1.x * edge2.x);
+						bitangent1.y = f * (-deltaUV2.x * edge1.y + deltaUV1.x * edge2.y);
+						bitangent1.z = f * (-deltaUV2.x * edge1.z + deltaUV1.x * edge2.z);
+						bitangent1 = glm::normalize(bitangent1);
+
+						// triangle 2
+						// ----------
+						edge1 = pos3 - pos1;
+						edge2 = pos4 - pos1;
+						deltaUV1 = uv3 - uv1;
+						deltaUV2 = uv4 - uv1;
+
+						f = 1.0f / (deltaUV1.x * deltaUV2.y - deltaUV2.x * deltaUV1.y);
+
+						tangent2.x = f * (deltaUV2.y * edge1.x - deltaUV1.y * edge2.x);
+						tangent2.y = f * (deltaUV2.y * edge1.y - deltaUV1.y * edge2.y);
+						tangent2.z = f * (deltaUV2.y * edge1.z - deltaUV1.y * edge2.z);
+						tangent2 = glm::normalize(tangent2);
+
+
+						bitangent2.x = f * (-deltaUV2.x * edge1.x + deltaUV1.x * edge2.x);
+						bitangent2.y = f * (-deltaUV2.x * edge1.y + deltaUV1.x * edge2.y);
+						bitangent2.z = f * (-deltaUV2.x * edge1.z + deltaUV1.x * edge2.z);
+						bitangent2 = glm::normalize(bitangent2);
 						normal[i] = 2;
+						tangent[i] = tangent1;
 						vertex[i++] = byte4(x, y + 1, z, top + 128);
 						normal[i] = 2;
+						tangent[i] = tangent1;
 						vertex[i++] = byte4(x, y + 1, z + 1, top + 128);
 						normal[i] = 2;
+						tangent[i] = tangent1;
 						vertex[i++] = byte4(x + 1, y + 1, z, top + 128);
 						normal[i] = 2;
+						tangent[i] = tangent2;
 						vertex[i++] = byte4(x + 1, y + 1, z, top + 128);
 						normal[i] = 2;
+						tangent[i] = tangent2;
 						vertex[i++] = byte4(x, y + 1, z + 1, top + 128);
 						normal[i] = 2;
+						tangent[i] = tangent2;
 						vertex[i++] = byte4(x + 1, y + 1, z + 1, top + 128);
 					}
 					vis = true;
@@ -557,17 +796,75 @@ struct chunk {
 						merged++;
 					}
 					else {
+						glm::vec3 pos1(x, y + 1, z);
+						glm::vec3 pos2(x, y, z);
+						glm::vec3 pos3(x + 1, y, z);
+						glm::vec3 pos4(x + 1, y + 1, z);
+
+						glm::vec2 uv1((0 + side) / 16.0, 1);
+						glm::vec2 uv2((0 + side) / 16.0, 0);
+						glm::vec2 uv3((1 + side) / 16.0, 0);
+						glm::vec2 uv4((1 + side) / 16.0, 1);
+						glm::vec3 nm(0.0f, 0.0f ,-1.0f);
+
+						// calculate tangent/bitangent vectors of both triangles
+						glm::vec3 tangent1, bitangent1;
+						glm::vec3 tangent2, bitangent2;
+						// triangle 1
+						// ----------
+						glm::vec3 edge1 = pos2 - pos1;
+						glm::vec3 edge2 = pos3 - pos1;
+						glm::vec2 deltaUV1 = uv2 - uv1;
+						glm::vec2 deltaUV2 = uv3 - uv1;
+
+						GLfloat f = 1.0f / (deltaUV1.x * deltaUV2.y - deltaUV2.x * deltaUV1.y);
+
+						tangent1.x = f * (deltaUV2.y * edge1.x - deltaUV1.y * edge2.x);
+						tangent1.y = f * (deltaUV2.y * edge1.y - deltaUV1.y * edge2.y);
+						tangent1.z = f * (deltaUV2.y * edge1.z - deltaUV1.y * edge2.z);
+						tangent1 = glm::normalize(tangent1);
+
+						bitangent1.x = f * (-deltaUV2.x * edge1.x + deltaUV1.x * edge2.x);
+						bitangent1.y = f * (-deltaUV2.x * edge1.y + deltaUV1.x * edge2.y);
+						bitangent1.z = f * (-deltaUV2.x * edge1.z + deltaUV1.x * edge2.z);
+						bitangent1 = glm::normalize(bitangent1);
+
+						// triangle 2
+						// ----------
+						edge1 = pos3 - pos1;
+						edge2 = pos4 - pos1;
+						deltaUV1 = uv3 - uv1;
+						deltaUV2 = uv4 - uv1;
+
+						f = 1.0f / (deltaUV1.x * deltaUV2.y - deltaUV2.x * deltaUV1.y);
+
+						tangent2.x = f * (deltaUV2.y * edge1.x - deltaUV1.y * edge2.x);
+						tangent2.y = f * (deltaUV2.y * edge1.y - deltaUV1.y * edge2.y);
+						tangent2.z = f * (deltaUV2.y * edge1.z - deltaUV1.y * edge2.z);
+						tangent2 = glm::normalize(tangent2);
+
+
+						bitangent2.x = f * (-deltaUV2.x * edge1.x + deltaUV1.x * edge2.x);
+						bitangent2.y = f * (-deltaUV2.x * edge1.y + deltaUV1.x * edge2.y);
+						bitangent2.z = f * (-deltaUV2.x * edge1.z + deltaUV1.x * edge2.z);
+						bitangent2 = glm::normalize(bitangent2);
 						normal[i] = -3;
+						tangent[i] = tangent1;
 						vertex[i++] = byte4(x, y, z, side);
 						normal[i] = -3;
+						tangent[i] = tangent1;
 						vertex[i++] = byte4(x, y + 1, z, side);
 						normal[i] = -3;
+						tangent[i] = tangent1;
 						vertex[i++] = byte4(x + 1, y, z, side);
 						normal[i] = -3;
+						tangent[i] = tangent2;
 						vertex[i++] = byte4(x, y + 1, z, side);
 						normal[i] = -3;
+						tangent[i] = tangent2;
 						vertex[i++] = byte4(x + 1, y + 1, z, side);
 						normal[i] = -3;
+						tangent[i] = tangent2;
 						vertex[i++] = byte4(x + 1, y, z, side);
 					}
 					vis = true;
@@ -606,17 +903,75 @@ struct chunk {
 						merged++;
 					}
 					else {
+						glm::vec3 pos1(x + 1, y, z + 1);
+						glm::vec3 pos2(x, y, z + 1);
+						glm::vec3 pos3(x, y + 1, z + 1);
+						glm::vec3 pos4(x + 1, y + 1, z + 1);
+
+						glm::vec2 uv1((1 + side) / 16.0, 0);
+						glm::vec2 uv2((0 + side) / 16.0, 0);
+						glm::vec2 uv3((0 + side) / 16.0, 1);
+						glm::vec2 uv4((1 + side) / 16.0, 1);
+						glm::vec3 nm(0.0f, 0.0f, 1.0f);
+
+						// calculate tangent/bitangent vectors of both triangles
+						glm::vec3 tangent1, bitangent1;
+						glm::vec3 tangent2, bitangent2;
+						// triangle 1
+						// ----------
+						glm::vec3 edge1 = pos2 - pos1;
+						glm::vec3 edge2 = pos3 - pos1;
+						glm::vec2 deltaUV1 = uv2 - uv1;
+						glm::vec2 deltaUV2 = uv3 - uv1;
+
+						GLfloat f = 1.0f / (deltaUV1.x * deltaUV2.y - deltaUV2.x * deltaUV1.y);
+
+						tangent1.x = f * (deltaUV2.y * edge1.x - deltaUV1.y * edge2.x);
+						tangent1.y = f * (deltaUV2.y * edge1.y - deltaUV1.y * edge2.y);
+						tangent1.z = f * (deltaUV2.y * edge1.z - deltaUV1.y * edge2.z);
+						tangent1 = glm::normalize(tangent1);
+
+						bitangent1.x = f * (-deltaUV2.x * edge1.x + deltaUV1.x * edge2.x);
+						bitangent1.y = f * (-deltaUV2.x * edge1.y + deltaUV1.x * edge2.y);
+						bitangent1.z = f * (-deltaUV2.x * edge1.z + deltaUV1.x * edge2.z);
+						bitangent1 = glm::normalize(bitangent1);
+
+						// triangle 2
+						// ----------
+						edge1 = pos3 - pos1;
+						edge2 = pos4 - pos1;
+						deltaUV1 = uv3 - uv1;
+						deltaUV2 = uv4 - uv1;
+
+						f = 1.0f / (deltaUV1.x * deltaUV2.y - deltaUV2.x * deltaUV1.y);
+
+						tangent2.x = f * (deltaUV2.y * edge1.x - deltaUV1.y * edge2.x);
+						tangent2.y = f * (deltaUV2.y * edge1.y - deltaUV1.y * edge2.y);
+						tangent2.z = f * (deltaUV2.y * edge1.z - deltaUV1.y * edge2.z);
+						tangent2 = glm::normalize(tangent2);
+
+
+						bitangent2.x = f * (-deltaUV2.x * edge1.x + deltaUV1.x * edge2.x);
+						bitangent2.y = f * (-deltaUV2.x * edge1.y + deltaUV1.x * edge2.y);
+						bitangent2.z = f * (-deltaUV2.x * edge1.z + deltaUV1.x * edge2.z);
+						bitangent2 = glm::normalize(bitangent2);
 						normal[i] = 3;
+						tangent[i] = tangent1;
 						vertex[i++] = byte4(x, y, z + 1, side);
 						normal[i] = 3;
+						tangent[i] = tangent1;
 						vertex[i++] = byte4(x + 1, y, z + 1, side);
 						normal[i] = 3;
+						tangent[i] = tangent1;
 						vertex[i++] = byte4(x, y + 1, z + 1, side);
 						normal[i] = 3;
+						tangent[i] = tangent2;
 						vertex[i++] = byte4(x, y + 1, z + 1, side);
 						normal[i] = 3;
+						tangent[i] = tangent2;
 						vertex[i++] = byte4(x + 1, y, z + 1, side);
 						normal[i] = 3;
+						tangent[i] = tangent2;
 						vertex[i++] = byte4(x + 1, y + 1, z + 1, side);
 					}
 					vis = true;
@@ -649,11 +1004,15 @@ struct chunk {
 			if (!chunk_slot[lru]) {
 				glGenBuffers(1, &vbo);
 				glGenBuffers(1, &vbo_normal);
+				glGenBuffers(1, &vbo_tangent);
+				glGenBuffers(1, &vbo_bitangent);
 				// Otherwise, steal it from the previous slot owner
 			}
 			else {
 				vbo = chunk_slot[lru]->vbo;
 				vbo_normal = chunk_slot[lru]->vbo_normal;
+				vbo_tangent = chunk_slot[lru]->vbo_tangent;
+				vbo_bitangent = chunk_slot[lru]->vbo_bitangent;
 				chunk_slot[lru]->changed = true;
 			}
 
@@ -667,6 +1026,10 @@ struct chunk {
 		glBufferData(GL_ARRAY_BUFFER, i * sizeof *vertex, vertex, GL_STATIC_DRAW);
 		glBindBuffer(GL_ARRAY_BUFFER, vbo_normal);
 		glBufferData(GL_ARRAY_BUFFER, i * sizeof *normal, normal, GL_STATIC_DRAW);
+		glBindBuffer(GL_ARRAY_BUFFER, vbo_tangent);
+		glBufferData(GL_ARRAY_BUFFER, i * sizeof *tangent, tangent, GL_STATIC_DRAW);
+		glBindBuffer(GL_ARRAY_BUFFER, vbo_bitangent);
+		glBufferData(GL_ARRAY_BUFFER, i * sizeof *bitangent, bitangent, GL_STATIC_DRAW);
 	}
 
 	void render() {
@@ -684,6 +1047,12 @@ struct chunk {
 		glBindBuffer(GL_ARRAY_BUFFER, vbo_normal);
 		glEnableVertexAttribArray(normal_coord);
 		glVertexAttribPointer(normal_coord, 1, GL_FLOAT, GL_FALSE, 0, 0);
+		glBindBuffer(GL_ARRAY_BUFFER, vbo_tangent);
+		glEnableVertexAttribArray(tangent_coord);
+		glVertexAttribPointer(tangent_coord, 3, GL_FLOAT, GL_FALSE, 0, 0);
+		glBindBuffer(GL_ARRAY_BUFFER, vbo_bitangent);
+		glEnableVertexAttribArray(bitangent_coord);
+		glVertexAttribPointer(bitangent_coord, 3, GL_FLOAT, GL_FALSE, 0, 0);
 		glDrawArrays(GL_TRIANGLES, 0, elements);
 	}
 };
@@ -778,7 +1147,8 @@ struct superchunk {
 						}
 						continue;
 					}
-
+					GLint uniform_model = glGetUniformLocation(program, "model");
+					glUniformMatrix4fv(uniform_model, 1, GL_FALSE, glm::value_ptr(model));
 					if (whichprogram == 0) {
 						glUniformMatrix4fv(uniform_mvp, 1, GL_FALSE, glm::value_ptr(mvp));
 						glUniformMatrix4fv(uniform_lightspacematrix_normal, 1, GL_FALSE, glm::value_ptr(LSM));
@@ -909,6 +1279,43 @@ GLuint create_program(const char *vertexfile, const char *fragmentfile) {
 	return shaderProgram;
 }
 
+unsigned int loadTexture(char const * path)
+{
+	unsigned int textureID;
+	glGenTextures(1, &textureID);
+
+	int width, height, nrComponents;
+	unsigned char *data = stbi_load(path, &width, &height, &nrComponents, 0);
+	if (data)
+	{
+		GLenum format;
+		if (nrComponents == 1)
+			format = GL_RED;
+		else if (nrComponents == 3)
+			format = GL_RGB;
+		else if (nrComponents == 4)
+			format = GL_RGBA;
+
+		glBindTexture(GL_TEXTURE_2D, textureID);
+		glTexImage2D(GL_TEXTURE_2D, 0, format, width, height, 0, format, GL_UNSIGNED_BYTE, data);
+		glGenerateMipmap(GL_TEXTURE_2D);
+
+		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, format == GL_RGBA ? GL_CLAMP_TO_EDGE : GL_REPEAT); // for this tutorial: use GL_CLAMP_TO_EDGE to prevent semi-transparent borders. Due to interpolation it takes texels from next repeat 
+		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, format == GL_RGBA ? GL_CLAMP_TO_EDGE : GL_REPEAT);
+		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR_MIPMAP_LINEAR);
+		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+
+		stbi_image_free(data);
+	}
+	else
+	{
+		std::cout << "Texture failed to load at path: " << path << std::endl;
+		stbi_image_free(data);
+	}
+
+	return textureID;
+}
+
 int main()
 {
 	for (int x = 0; x < SCX; x++)
@@ -970,6 +1377,7 @@ int main()
 	program = create_program("glcraft.vert", "glcraft.frag");
 	depthProgram = create_program("simple.vert", "simple.frag");
 	depthTestProgram = create_program("simpleTexture.vert", "simpleTexture.frag");
+
 	if (program == 0 || depthProgram == 0)
 		return 0;
 
@@ -981,6 +1389,7 @@ int main()
 	uniform_viewpos = get_uniform(program, "viewPos");
 	uniform_lightspacematrix_normal = get_uniform(program, "lightSpaceMatrix");
 	uniform_texture = get_uniform(program, "texture");
+	uniform_normalMap = get_uniform(program, "normalMap");
 	uniform_shadow = get_uniform(program, "shadow");
 	uniform_dirlight.direction = get_uniform(program, "dirlight.direction");
 	uniform_dirlight.ambient = get_uniform(program, "dirlight.ambient");
@@ -1017,6 +1426,21 @@ int main()
 	}
 	stbi_image_free(data);
 
+	//glActiveTexture(GL_TEXTURE1);
+	glGenTextures(1, &normalMap);
+	glBindTexture(GL_TEXTURE_2D, normalMap);
+	unsigned char *data2 = stbi_load("normaltextures.png", &width, &height, &nrChannels, 0);
+	if (data2)
+	{
+		glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, width, height, 0, GL_RGBA, GL_UNSIGNED_BYTE, data2);
+		glGenerateMipmap(GL_TEXTURE_2D);
+	}
+	else
+	{
+		std::cout << "Failed to load texture" << std::endl;
+	}
+	stbi_image_free(data2);
+
 	/* Create the world */
 
 	world = new superchunk;
@@ -1043,6 +1467,8 @@ int main()
 
 	glEnableVertexAttribArray(attribute_coord);
 	glEnableVertexAttribArray(normal_coord);
+	glEnableVertexAttribArray(tangent_coord);
+	glEnableVertexAttribArray(bitangent_coord);
 
 	unsigned int VAO;
 	glGenVertexArrays(1, &VAO);
@@ -1054,7 +1480,7 @@ int main()
 	//create depth texture
 	GLuint depthMapFBO;
 	glGenFramebuffers(1, &depthMapFBO);
-	const GLuint SHADOW_WIDTH = 5000, SHADOW_HEIGHT = 5000;
+	const GLuint SHADOW_WIDTH = 9000, SHADOW_HEIGHT = 9000;
 	GLuint depthMap;
 	glGenTextures(1, &depthMap);
 	glBindTexture(GL_TEXTURE_2D, depthMap);
@@ -1169,6 +1595,10 @@ int main()
 		glActiveTexture(GL_TEXTURE1);
 		glUniform1i(uniform_shadow, 1);
 		glBindTexture(GL_TEXTURE_2D, depthMap);
+		glActiveTexture(GL_TEXTURE2);
+		glUniform1i(uniform_normalMap, 2);
+		glBindTexture(GL_TEXTURE_2D, normalMap);
+		
 		world->render(pv, lightSpaceMatrix, 0);
 
 		/* At which voxel are we looking? */
@@ -1197,13 +1627,13 @@ int main()
 
 			/* Find out which face of the block we are looking at */
 
-			if (fract(objcoord.x) < fract(objcoord.y))
-				if (fract(objcoord.x) < fract(objcoord.z))
+			if (glm::fract(objcoord.x) < glm::fract(objcoord.y))
+				if (glm::fract(objcoord.x) < glm::fract(objcoord.z))
 					face = 0; // X
 				else
 					face = 2; // Z
 			else
-				if (fract(objcoord.y) < fract(objcoord.z))
+				if (glm::fract(objcoord.y) < glm::fract(objcoord.z))
 					face = 1; // Y
 				else
 					face = 2; // Z
