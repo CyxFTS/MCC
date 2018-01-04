@@ -34,8 +34,11 @@ bool firstMouse = true;
 // timing
 float deltaTime = 0.0f;	// time between current frame and last frame
 float lastFrame = 0.0f;
+bool firstRender = true;
+GLdouble firstRenderTime;
 
 static GLuint program;
+static GLuint water_program;
 static GLuint depthProgram;
 static GLuint depthTestProgram;
 const static GLint attribute_coord = 0;
@@ -43,6 +46,9 @@ const static GLint normal_coord = 1;
 const static GLint tangent_coord = 2;
 const static GLint bitangent_coord = 3;
 static GLint uniform_mvp;
+static GLint uniform_model;
+static GLint uniform_view;
+static GLint uniform_projection;
 static GLuint texture, normalMap;
 static GLint uniform_texture, uniform_normalMap;
 static GLuint cursor_vbo;
@@ -76,9 +82,12 @@ static bool select_using_depthbuffer = true;
 #define CZ 16
 
 // Number of chunks in the world
-#define SCX 32
+//#define SCX 32
+//#define SCY 16
+//#define SCZ 32
+#define SCX 16
 #define SCY 16
-#define SCZ 32
+#define SCZ 16
 
 int blocks[CX*SCX][CY*SCY][CZ*SCZ];
 
@@ -87,6 +96,8 @@ int blocks[CX*SCX][CY*SCY][CZ*SCZ];
 
 // Number of VBO slots for chunks
 #define CHUNKSLOTS (SCX * SCY * SCZ)
+
+GLuint create_program(const char *vertexfile, const char *fragmentfile);
 
 static const int transparent[16] = { 2, 0, 0, 0, 1, 0, 0, 0, 3, 4, 0, 0, 0, 0, 0, 0 };
 static const char *blocknames[16] = {
@@ -99,6 +110,69 @@ struct byte4 {
 	byte4() {}
 	byte4(const uint8_t &x, const uint8_t &y, const uint8_t &z, const uint8_t &w) : x(x), y(y), z(z), w(w) {}
 };
+
+struct vertexFormat {
+	float x, y, z, nx, ny, nz, ux, uy;
+	vertexFormat() {}
+	vertexFormat(float tx, float ty, float tz, float tnx, float tny, float tnz, float tux, float tuy) :
+		x(tx), y(ty), z(tz), nx(tnx), ny(tny), nz(tnz), ux(tux), uy(tuy) {}
+};
+#define WAVE_AMPLITUDE 0.01f
+#define WAVE_LENGTH 0.01f
+#define WAVE_SPEED 0.01f
+#define DAMPING 0.0f
+#define STEEPNESS 1.f
+
+#define SPLIT 5
+
+struct Wave {
+	GLfloat A = WAVE_AMPLITUDE;
+	glm::vec2 D;
+	glm::vec2 C;
+	GLfloat w = 2.f * glm::pi<GLfloat>() / WAVE_LENGTH;
+	GLfloat phi = WAVE_SPEED * w;
+};
+Wave w1, w2, w3;
+
+GLint get_uniform(GLuint program, const char *name) {
+	GLint uniform = glGetUniformLocation(program, name);
+	if (uniform == -1)
+		fprintf(stderr, "Could not bind uniform %s\n", name);
+	return uniform;
+}
+void set_uniform(GLuint program, const GLchar* name, GLint v0) {
+	glUniform1i(get_uniform(program, name), v0);
+}
+void set_uniform(GLuint program, const GLchar* name, GLfloat v0) {
+	glUniform1f(get_uniform(program, name), v0);
+}
+void set_uniform(GLuint program, const GLchar* name, GLfloat v0, GLfloat v1) {
+	glUniform2f(get_uniform(program, name), v0, v1);
+}
+void set_uniform(GLuint program, const GLchar* name, GLfloat v0, GLfloat v1, GLfloat v2) {
+	glUniform3f(get_uniform(program, name), v0, v1, v2);
+}
+void set_uniform(GLuint program, const GLchar* name, GLfloat v0, GLfloat v1, GLfloat v2, GLfloat v3) {
+	glUniform4f(get_uniform(program, name), v0, v1, v2, v3);
+}
+void set_uniform(GLuint program, const GLchar* name, const glm::vec2& value, GLsizei count = 1) {
+	glUniform2fv(get_uniform(program, name), count, glm::value_ptr(value));
+}
+void set_uniform(GLuint program, const GLchar* name, const glm::vec3& value, GLsizei count = 1) {
+	glUniform3fv(get_uniform(program, name), count, glm::value_ptr(value));
+}
+void set_uniform(GLuint program, const GLchar* name, const glm::vec4& value, GLsizei count = 1) {
+	glUniform4fv(get_uniform(program, name), count, glm::value_ptr(value));
+}
+void set_uniform(GLuint program, const GLchar* name, const glm::mat2& value, GLboolean transpose = GL_FALSE, GLsizei count = 1) {
+	glUniformMatrix2fv(get_uniform(program, name), count, transpose, glm::value_ptr(value));
+}
+void set_uniform(GLuint program, const GLchar* name, const glm::mat3& value, GLboolean transpose = GL_FALSE, GLsizei count = 1) {
+	glUniformMatrix3fv(get_uniform(program, name), count, transpose, glm::value_ptr(value));
+}
+void set_uniform(GLuint program, const GLchar* name, const glm::mat4& value, GLboolean transpose = GL_FALSE, GLsizei count = 1) {
+	glUniformMatrix4fv(get_uniform(program, name), count, transpose, glm::value_ptr(value));
+}
 
 static struct chunk *chunk_slot[CHUNKSLOTS] = { 0 };
 
@@ -333,7 +407,7 @@ struct chunk {
 		bool vis = false;
 
 		// View from negative x
-
+		
 		for (int x = CX - 1; x >= 0; x--) {
 			for (int y = 0; y < CY; y++) {
 				for (int z = 0; z < CZ; z++) {
@@ -342,7 +416,8 @@ struct chunk {
 						vis = false;
 						continue;
 					}
-
+					if (blk[x][y][z] == 8)
+						continue;
 					uint8_t top = blk[x][y][z];
 					uint8_t bottom = blk[x][y][z];
 					uint8_t side = blk[x][y][z];
@@ -454,7 +529,8 @@ struct chunk {
 						vis = false;
 						continue;
 					}
-
+					if (blk[x][y][z] == 8)
+						continue;
 					uint8_t top = blk[x][y][z];
 					uint8_t bottom = blk[x][y][z];
 					uint8_t side = blk[x][y][z];
@@ -562,7 +638,8 @@ struct chunk {
 						vis = false;
 						continue;
 					}
-
+					if (blk[x][y][z] == 8)
+						continue;
 					uint8_t top = blk[x][y][z];
 					uint8_t bottom = blk[x][y][z];
 
@@ -668,7 +745,8 @@ struct chunk {
 						vis = false;
 						continue;
 					}
-
+					if (blk[x][y][z] == 8)
+						continue;
 					uint8_t top = blk[x][y][z];
 					uint8_t bottom = blk[x][y][z];
 
@@ -774,7 +852,8 @@ struct chunk {
 						vis = false;
 						continue;
 					}
-
+					if (blk[x][y][z] == 8)
+						continue;
 					uint8_t top = blk[x][y][z];
 					uint8_t bottom = blk[x][y][z];
 					uint8_t side = blk[x][y][z];
@@ -881,7 +960,8 @@ struct chunk {
 						vis = false;
 						continue;
 					}
-
+					if (blk[x][y][z] == 8)
+						continue;
 					uint8_t top = blk[x][y][z];
 					uint8_t bottom = blk[x][y][z];
 					uint8_t side = blk[x][y][z];
@@ -1061,6 +1141,8 @@ struct superchunk {
 	chunk *c[SCX][SCY][SCZ];
 	time_t seed;
 
+	GLuint water_vao, water_vbo, water_ibo;
+
 	superchunk() {
 		seed = time(NULL);
 		for (int x = 0; x < SCX; x++)
@@ -1107,6 +1189,142 @@ struct superchunk {
 
 		c[cx][cy][cz]->set(x & (CX - 1), y & (CY - 1), z & (CZ - 1), type);
 	}
+
+	void water_render(const glm::mat4 &pv, const int &whichprogram) {
+		glBindVertexArray(water_vao);
+		glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
+		//glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
+		glDrawElements(GL_TRIANGLES, SCZ * CZ * SPLIT * SCX * CX * SPLIT * 2 * 3, GL_UNSIGNED_INT, (GLvoid*)0);
+		glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
+		glBindVertexArray(0);
+	}
+
+	void water_init() {
+		glGenVertexArrays(1, &water_vao);
+		glGenBuffers(1, &water_vbo);
+		glGenBuffers(1, &water_ibo);
+
+		water_program = create_program("glcraft_water.vert", "glcraft_water.frag");
+		glUseProgram(water_program);
+		uniform_model = get_uniform(water_program, "model");
+		uniform_view = get_uniform(water_program, "view");
+		uniform_projection = get_uniform(water_program, "projection");
+
+		glViewport(0, 0, SCR_WIDTH, SCR_HEIGHT);
+		glEnable(GL_DEPTH_TEST);
+		glDepthFunc(GL_LESS);
+
+		// Set up waves
+		// Directional
+		//w1.A *= 120; // 120
+		//w1.w *= 1.f / 150.f;
+		//w1.phi = 50.f * WAVE_SPEED * w1.w;
+		//w1.D = glm::normalize(glm::vec2(.5f, .5f));
+		w1.A *= 6; // 120
+		w1.w *= 10.f / 600.f;
+		w1.phi = 50.f * WAVE_SPEED * w1.w;
+		w1.D = glm::normalize(glm::vec2(.5f, .5f));
+		// Circular 1
+		w2.A *= 11; // 110
+		w2.w = 1.f / 13.5f;
+		w2.phi = 500 * WAVE_SPEED * w2.w;
+		w2.C = glm::vec2(40.f, 40.f);
+		w2.D = glm::normalize(glm::vec2(.2f, .4f));
+		// Circular 2
+		w3.A *= 13; // 130
+		w3.w = 1.f / 20.f;
+		w3.phi = 300 * WAVE_SPEED * w3.w;
+		w3.C = glm::vec2(-40.f, -40.f);
+		w3.D = glm::normalize(glm::vec2(.1f, .9f));
+		sendWaves();
+	}
+
+	void sendWaves() {
+		set_uniform(water_program, "w1.A", w1.A);
+		set_uniform(water_program, "w1.C", w1.C);
+		set_uniform(water_program, "w1.D", w1.D);
+		set_uniform(water_program, "w1.w", w1.w);
+		set_uniform(water_program, "w1.phi", w1.phi);
+
+		set_uniform(water_program, "w2.A", w2.A);
+		set_uniform(water_program, "w2.C", w2.C);
+		set_uniform(water_program, "w2.D", w2.D);
+		set_uniform(water_program, "w2.w", w2.w);
+		set_uniform(water_program, "w2.phi", w2.phi);
+
+		set_uniform(water_program, "w3.A", w3.A);
+		set_uniform(water_program, "w3.C", w3.C);
+		set_uniform(water_program, "w3.D", w3.D);
+		set_uniform(water_program, "w3.w", w3.w);
+		set_uniform(water_program, "w3.phi", w3.phi);
+	}
+
+	void water_generate() {
+		const int points_x_n = SCX * CX * SPLIT + 1;
+		const int points_z_n = SCZ * CZ * SPLIT + 1;
+		vertexFormat vertex[points_x_n][points_z_n];
+		GLuint index[points_x_n - 1][points_z_n - 1][2][3];
+
+		int vertex_size = points_x_n * points_z_n;
+		int index_size = (points_x_n - 1)*(points_z_n - 1) * 2 * 3;
+
+		//double lx = -0.5f, rx = 0.5f;
+		//double lz = -0.5f, rz = 0.5f;
+		int lx = (-SCX / 2) * CX;
+		int lz = (-SCZ / 2) * CZ;
+		double dx = 1.0f / SPLIT;
+		double dz = 1.0f / SPLIT;
+
+		double cz = lz;
+		double cy = -65.5f;
+		for (int gz = 0; gz < points_z_n; gz++) {
+			double cx = lx;
+			for (int gx = 0; gx < points_x_n; gx++) {
+				vertex[gz][gx] = vertexFormat(cx, cy, cz, 0.0f, 1.0f, 0.0f, 0.0f, 0.0f);
+				cx += dx;
+			}
+			cz += dz;
+		}
+
+		//row points - n = CX * 16
+		for (int tz = 0; tz < points_z_n - 1; tz++) {
+			for (int tx = 0; tx < points_x_n - 1; tx++) {
+				index[tz][tx][0][0] = tz * points_x_n + tx;
+				index[tz][tx][0][1] = tz * points_x_n + tx + 1;
+				index[tz][tx][0][2] = (tz + 1) * points_x_n + tx;
+
+				index[tz][tx][1][0] = tz * points_x_n + tx + 1;
+				index[tz][tx][1][1] = (tz + 1) * points_x_n + tx;
+				index[tz][tx][1][2] = (tz + 1) * points_x_n + tx + 1;
+			}
+		}
+
+		// Create buffers to hold the mesh data
+
+		glBindVertexArray(water_vao);
+		glBindBuffer(GL_ARRAY_BUFFER, water_vao);
+		glBufferData(GL_ARRAY_BUFFER, vertex_size * sizeof(vertexFormat), &vertex[0], GL_STATIC_DRAW);
+
+		// Configure the vertex attribute pointers
+		// Send vertex positions to attrib pointer 0
+		glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, sizeof(vertexFormat), (GLvoid*)0);
+		glEnableVertexAttribArray(0);
+		// Send vertex normals to attrib pointer 1
+		glVertexAttribPointer(1, 3, GL_FLOAT, GL_FALSE, sizeof(vertexFormat), (GLvoid*)(sizeof(GLfloat) * 3));
+		glEnableVertexAttribArray(1);
+		// Send vertex uv texcoords to attrib pointer 2
+		glVertexAttribPointer(2, 2, GL_FLOAT, GL_FALSE, sizeof(vertexFormat), (GLvoid*)(sizeof(GLfloat) * 6));
+		glEnableVertexAttribArray(2);
+		glBindBuffer(GL_ARRAY_BUFFER, 0);
+		glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, water_ibo);
+		glBufferData(GL_ELEMENT_ARRAY_BUFFER, index_size * sizeof(GLuint), &index[0], GL_STATIC_DRAW);
+
+		// Clean up
+		glBindBuffer(GL_ARRAY_BUFFER, 0);
+		glBindVertexArray(0);
+		glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, 0);
+	}
+
 
 	void render(const glm::mat4 &pv, const glm::mat4 &lightSpaceMatrix, const int &whichprogram) {
 		float ud = 1 >> 32;
@@ -1206,12 +1424,7 @@ static float fract(float value) {
 		return f;
 }
 
-GLint get_uniform(GLuint program, const char *name) {
-	GLint uniform = glGetUniformLocation(program, name);
-	if (uniform == -1)
-		fprintf(stderr, "Could not bind uniform %s\n", name);
-	return uniform;
-}
+
 
 void checkError(unsigned int shader, const bool type) {
 	int success;
@@ -1445,6 +1658,9 @@ int main()
 
 	world = new superchunk;
 
+	world->water_init();
+	world->water_generate();
+
 	position = glm::vec3(0, CY + 1, 0);
 	angle = glm::vec3(0, -0.5, 0);
 	update_vectors();
@@ -1502,6 +1718,7 @@ int main()
 	glUniform1i(uniform_texture, 0);
 	glBindTexture(GL_TEXTURE_2D, texture);
 
+
 	// render loop
 	// -----------
 	while (!glfwWindowShouldClose(window))
@@ -1520,9 +1737,12 @@ int main()
 
 		// pass projection matrix to shader (note that in this case it could change every frame)
 		glm::mat4 projection = glm::perspective(glm::radians(camera.Zoom), (float)SCR_WIDTH / (float)SCR_HEIGHT, 0.1f, 100.0f);
+		glm::mat4 model = glm::mat4(1.0f);
 		// camera/view transformation
 		glm::mat4 view = camera.GetViewMatrix();
 		glm::mat4 pv = projection * view;
+
+
 
 		glUniform3f(uniform_viewpos, camera.Position.x, camera.Position.y, camera.Position.z);
 		dirlight.direction = glm::vec3(-1,-2,-1);
@@ -1750,6 +1970,28 @@ int main()
 		glBufferData(GL_ARRAY_BUFFER, sizeof cross, cross, GL_DYNAMIC_DRAW);
 		glVertexAttribPointer(attribute_coord, 4, GL_FLOAT, GL_FALSE, 0, 0);
 		glDrawArrays(GL_LINES, 0, 4);
+
+		glUseProgram(water_program);
+		glUniformMatrix4fv(uniform_projection, 1, GL_FALSE, glm::value_ptr(projection));
+		glUniformMatrix4fv(uniform_view, 1, GL_FALSE, glm::value_ptr(view));
+		glUniformMatrix4fv(uniform_model, 1, GL_FALSE, glm::value_ptr(model));
+		if (firstRender)
+		{
+			firstRender = false;
+			firstRenderTime = glfwGetTime();
+		}
+		GLfloat dt = (GLfloat)glfwGetTime() - (GLfloat)firstRenderTime;
+		set_uniform(water_program, "dt", dt);
+		set_uniform(water_program, "damp", DAMPING);
+		set_uniform(water_program, "Q", STEEPNESS);
+		set_uniform(water_program, "E", 3.1415926f);
+		//glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+
+		glEnable(GL_DEPTH_TEST);
+		glEnable(GL_POLYGON_OFFSET_FILL);
+
+		world->water_render(pv, water_program);
+
 
 		glfwSwapBuffers(window);
 		glfwPollEvents();
