@@ -85,9 +85,9 @@ static bool select_using_depthbuffer = true;
 //#define SCX 32
 //#define SCY 16
 //#define SCZ 32
-#define SCX 16
+#define SCX 32
 #define SCY 16
-#define SCZ 16
+#define SCZ 32
 
 int blocks[CX*SCX][CY*SCY][CZ*SCZ];
 
@@ -123,7 +123,7 @@ struct vertexFormat {
 #define DAMPING 0.0f
 #define STEEPNESS 1.f
 
-#define SPLIT 5
+#define SPLIT 1
 
 struct Wave {
 	GLfloat A = WAVE_AMPLITUDE;
@@ -1141,7 +1141,7 @@ struct superchunk {
 	chunk *c[SCX][SCY][SCZ];
 	time_t seed;
 
-	GLuint water_vao, water_vbo, water_ibo;
+	GLuint water_vao, water_vbo, water_ibo, water_texture;
 
 	superchunk() {
 		seed = time(NULL);
@@ -1199,6 +1199,39 @@ struct superchunk {
 		glBindVertexArray(0);
 	}
 
+	void create_water_texture() {
+		glGenTextures(1, &water_texture);
+		glBindTexture(GL_TEXTURE_2D, water_texture);
+		// set the texture wrapping parameters
+		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_REPEAT);	// set texture wrapping to GL_REPEAT (default wrapping method)
+		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_REPEAT);
+		// set texture filtering parameters
+		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
+		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+		// load image, create texture and generate mipmaps
+		int water_width, water_height, water_nrChannels;
+		stbi_set_flip_vertically_on_load(true); // tell stb_image.h to flip loaded texture's on the y-axis.
+												// The FileSystem::getPath(...) is part of the GitHub repository so we can find files on any IDE/platform; replace it with your own image path.
+		unsigned char *data = stbi_load("water.png", &water_width, &water_height, &water_nrChannels, 0);
+		if (data)
+		{
+			glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB, water_width, water_height, 0, GL_RGB, GL_UNSIGNED_BYTE, data);
+			glGenerateMipmap(GL_TEXTURE_2D);
+		}
+		else
+		{
+			std::cout << "Failed to load texture" << std::endl;
+		}
+		stbi_image_free(data);
+		glUseProgram(water_program);
+		glUniform1i(glGetUniformLocation(water_program, "waterTexture"), 0);
+	}
+
+	void set_water_textrue() {
+		glActiveTexture(GL_TEXTURE0);
+		glBindTexture(GL_TEXTURE_2D, water_texture);
+	}
+
 	void water_init() {
 		glGenVertexArrays(1, &water_vao);
 		glGenBuffers(1, &water_vbo);
@@ -1213,7 +1246,6 @@ struct superchunk {
 		glViewport(0, 0, SCR_WIDTH, SCR_HEIGHT);
 		glEnable(GL_DEPTH_TEST);
 		glDepthFunc(GL_LESS);
-
 		// Set up waves
 		// Directional
 		//w1.A *= 120; // 120
@@ -1742,12 +1774,12 @@ int main()
 		glm::mat4 view = camera.GetViewMatrix();
 		glm::mat4 pv = projection * view;
 
-
-
+		glUseProgram(program);
 		glUniform3f(uniform_viewpos, camera.Position.x, camera.Position.y, camera.Position.z);
+
 		dirlight.direction = glm::vec3(-1,-2,-1);
 		dirlight.UniformSet(uniform_dirlight);
-		glm::mat4 lightProjection = glm::ortho(-50.0f, 50.0f, -50.0f, 50.0f, 0.1f, 80.0f);
+		glm::mat4 lightProjection = glm::ortho(-100.0f, 100.0f, -100.0f, 100.0f, 0.1f, 80.0f);
 		glm::vec3 lightPos = glm::normalize(-dirlight.direction);
 		lightPos *= 50;
 		glm::vec3 lookAtCenter = camera.Front;
@@ -1981,10 +2013,12 @@ int main()
 			firstRenderTime = glfwGetTime();
 		}
 		GLfloat dt = (GLfloat)glfwGetTime() - (GLfloat)firstRenderTime;
+		set_uniform(water_program, "lightPos", lightPos);
+		set_uniform(water_program, "eyePos", camera.Position);
 		set_uniform(water_program, "dt", dt);
 		set_uniform(water_program, "damp", DAMPING);
 		set_uniform(water_program, "Q", STEEPNESS);
-		set_uniform(water_program, "E", 3.1415926f);
+		set_uniform(water_program, "E", 3.1415926535898f);
 		//glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
 		glEnable(GL_DEPTH_TEST);

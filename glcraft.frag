@@ -14,6 +14,7 @@ in vec4 fragPosLightSpace;
 uniform sampler2D shadow;
 uniform sampler2D texture;
 uniform sampler2D normalMap;
+// uniform bool under_water;
 
 in VS_OUT {
     vec3 FragPos;
@@ -84,4 +85,11 @@ void main(void) {
 
 	// Final color is a mix of the actual color and the fog color
 	gl_FragColor = mix(fogcolor, color, fog);
+
+	
+	if (viewPos.y < -65.5f){
+		// gl_FragColor = vec4(0.0f, 0.0f, 0.50f, 1.0f);
+		gl_FragColor = mix(gl_FragColor, vec4(0.0f, 0.0f, 0.50f, 1.0f), 0.5f);
+	}
+	
 }

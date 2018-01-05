@@ -10,9 +10,11 @@ struct Wave {
 
 layout (location = 0) in vec3 position;
 layout (location = 1) in vec3 normal;
+// layout (location = 2) in vec3 texCoord;
 
 out vec3 FragPos;
 out vec3 Normal;
+// out vec2 texCoord;
 
 uniform mat4 model;
 uniform mat4 view;
@@ -142,6 +144,7 @@ void main()
 	Normal.z = computeNormZ();
 	Normal.y = computeNormY();
 	
+	// texCoord = vec2(texCoord.x, texCoord.y);
 	vec4 worldPos = model * vec4(Position, 1);  
 	gl_Position = projection * view * worldPos;
 	FragPos = worldPos.xyz;
