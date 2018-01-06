@@ -89,7 +89,6 @@ public:
 			for (int j = 0; j < areaWidth; ++j)
 			{
 				srand(GetChunkSeed(areaX + j, areaY + i));
-				//Random random = new Random(GetChunkSeed(areaX + j, areaY + i));
 				result[i][j] = rand()%3 == 0 ? 1 : 0;
 			}
 		}
@@ -202,7 +201,6 @@ public:
 			for (int j = 0; j < areaWidth; ++j)
 			{
 				srand(GetChunkSeed(areaX + j, areaY + i));
-				//Random random = new Random(GetChunkSeed(areaX + j, areaY + i));
 				if (parentResult[i][j] == (int)Plains)
 				{
 					int r = rand() % 10;// random.Next(10);
@@ -264,7 +262,6 @@ public:
 				int parentValueX1Y1 = parentRes[y + 1][x + 1];
 				int randomSeed = GetChunkSeed(x + areaX, y + areaY);
 				srand(randomSeed);
-				//Random random = new Random(randomSeed);
 
 				// 中心不为0 或 周围全是0
 				if (parentValueX1Y1 != 0 || (parentValue == 0 && parentValueX2 == 0 && parentValueY2 == 0 && parentValueX2Y2 == 0))
@@ -432,7 +429,6 @@ public:
 
 				int seed = GetChunkSeed(tmpx, tmpy);
 				srand(seed);
-				//Random rand = new Random(seed);
 
 				if (randomValueX1Y1 == randomValueY1
 					&& randomValueX1Y1 == randomValueX1
@@ -498,10 +494,5 @@ GenLayer* GenLayer::InitAllLayer(int seed)
 	GenLayer *addRiver = new GenLayerAddRiver(1000, zoomed3);
 
 	GenLayer *result = GenLayerZoomMagnify(seed, addRiver, 2);
-	/*int x = -40;
-	int z = -40;
-	auto biomeIds = zoomed1->GetInts(160 * x - 160, 160 * z - 160, 480, 480);*/
-	// GenLayer biomesAdded = new GenLayerBiome(seed, zoomed0);
-	// GenLayer zoomed2 = new GenLayerZoom(seed, zoomed1);
 	return result;
 }

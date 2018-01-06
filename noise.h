@@ -359,8 +359,8 @@ private:
 	}
 
 	// Source: http://riven8192.blogspot.com/2010/08/calculate-perlinnoise-twice-as-fast.html
-	public:
-		static float Grad(int hash, float x, float y, float z)
+public:
+	static float Grad(int hash, float x, float y, float z)
 	{
 		switch (hash & 0xF)
 		{
@@ -424,7 +424,6 @@ public:
 
 	void Noise(vector<vector<vector<float>>> & noise, glm::vec3 offset, glm::vec3 scale)
 	{
-		//Array.Clear(noise, 0, noise.Length);
 		for (auto i : noise)
 			for (auto j : i)
 				for (auto k : j)

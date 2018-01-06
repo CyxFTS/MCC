@@ -23,8 +23,6 @@ private:
 	OctavedNoise _surfaceNoise;
 
 	int _seed;
-	//Random _random;
-
 	vector<vector<float>> _biomeWeights;
 
 	vector<vector<Biome>> _biomesForGeneration; // 10x10 or 16 x 16
@@ -47,7 +45,6 @@ public:
 		
 		_seed = 6748;
 		srand(_seed);
-		//_random = new Random(_seed);
 		int a = rand();
 		_depthNoise = OctavedNoise(PerlinNoise(a), 8, 0.5F);
 		_mainNoise = OctavedNoise(PerlinNoise(rand()), 8, 0.5F);
@@ -68,7 +65,6 @@ public:
 		_biomesForGeneration = vector<vector<Biome>>(16, vector<Biome>(16, Biome()));
 
 		_genlayer = GenLayer().InitAllLayer(_seed);
-		//return Task.CompletedTask;
 	}
 	
 	ChunkColumnStorage Generate(/*IWorld world, */int x, int z, GeneratorSettings settings)
@@ -76,14 +72,7 @@ public:
 		ChunkColumnStorage chunkColumn;
 		for (int i = 0; i < 16; ++i)
 			chunkColumn.Sections[i] = ChunkSectionStorage(true);
-
-		/*auto info = new MapGenerationInfo
-		{
-			Seed = await world.GetSeed()
-		};*/
 		GenerateChunk(/*info, */chunkColumn, x, z, settings);
-		/*PopulateChunk(world, chunkColumn, x, z, settings);*/
-		/*return chunkColumn.Compact();*/
 		return chunkColumn;
 	}
 
@@ -127,29 +116,8 @@ private:
 
 		// 添加生物群系特有方块
 		ReplaceBiomeBlocks(settings, x, z, chunk, _biomesForGeneration);
-
-		// Todo genrate structure
-		// 生成洞穴
-		/*if (settings.UseCaves)
-		{
-			CavesGenerator generator = new CavesGenerator(info);
-			generator.Generate(info, x, z, chunk, _biomesForGeneration[8, 8]);
-		}*/
-
-		//// 计算skylight
-		//GenerateSkylightMap(chunk);
 	}
 
-//public:
-//	void PopulateChunk(IWorld world, ChunkColumnStorage &chunk, int x, int z, GeneratorSettings settings)
-//	{
-//		int blockX = x * 16;
-//		int blockZ = z * 16;
-//		Biome chunkBiome = Biome.GetBiome(chunk.Biomes[7 * 16 + 7], settings);
-//
-//		chunkBiome.Decorate(world, GrainFactory, chunk, _random, new BlockWorldPos{ X = blockX, Y = 0, Z = blockZ });
-//		chunkBiome.SpawnMob(world, GrainFactory, chunk, _random, new BlockWorldPos{ X = blockX, Y = 0, Z = blockZ });
-//	}
 	template<class T>
 	constexpr const T& clamp(const T& v, const T& lo, const T& hi)
 	{
@@ -409,24 +377,6 @@ private:
 			}
 		}
 	}
-
-	/*private void GenerateSkylightMap(ChunkColumnStorage &chunk)
-	{
-		for (int i = 0; i < ChunkConstants.SectionsPerChunk; ++i)
-		{
-			auto skyLight = chunk.Sections[i].SkyLight;
-			for (int y = 0; y < ChunkConstants.BlockEdgeWidthInSection; y++)
-			{
-				for (int z = 0; z < ChunkConstants.BlockEdgeWidthInSection; z++)
-				{
-					for (int x = 0; x < ChunkConstants.BlockEdgeWidthInSection; x++)
-					{
-						skyLight[x, y, z] = 0xF;
-					}
-				}
-			}
-		}
-	}*/
 
 	int GetDensityMapIndex(int x, int y, int z)
 	{

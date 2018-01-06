@@ -179,9 +179,6 @@ public:
 
 	vector<BlockState> FlatBlockId = { BlockState(Bedrock, 0), BlockState(BlockId::Stone, StoneType::Stone), BlockState(BlockId::Dirt, DirtType::Dirt), BlockState(BlockId::Grass, GrassType::Shrub)};
 
-	// FlatGeneratorInfo FlatGeneratorInfo 
-
-	// OverworldGeneratorInfo OverworldGeneratorInfo 
 };
 
 class Biome
@@ -213,48 +210,6 @@ public:
 	/** The block to fill spots in when not on the top */
 	BlockState _fillerBlock = BlockState(BlockId::Dirt, DirtType::Dirt);
 
-	// 噪声函数
-	/*protected static readonly OctavedNoise<PerlinNoise> _temperatureNoise =
-		new OctavedNoise<PerlinNoise>(new PerlinNoise(1234), 4, 0.5F);
-
-	protected static readonly OctavedNoise<PerlinNoise> _grassColorNoise =
-		new OctavedNoise<PerlinNoise>(new PerlinNoise(2345), 4, 0.5F);*/
-
-//	// 矿物生成器
-//private:
-//	MinableGenerator _dirtGen; // 你没看错，这些当作矿物生成
-//	MinableGenerator _gravelOreGen;
-//	MinableGenerator _graniteGen;
-//	MinableGenerator _dioriteGen;
-//	MinableGenerator _andesiteGen;
-//
-//	MinableGenerator _coalGen;
-//	MinableGenerator _ironGen;
-//	MinableGenerator _goldGen;
-//	MinableGenerator _redstoneGen;
-//	MinableGenerator _diamondGen;
-//	MinableGenerator _lapisGen;
-
-	// 植被设置
-//protected:
-//	int _treesPerChunk;
-//	float _extraTreeChance;
-//	int _grassPerChunk;
-//	int _flowersPerChunk;
-//	int _mushroomsPerChunk;
-//
-//	int _deadBushPerChunk;
-//	int _reedsPerChunk;
-//	int _cactiPerChunk;
-//
-//	// 生物种类
-//	List<MobType> _passiveMobList;
-//	List<MobType> _monsterList;
-//
-//	int _clayPerChunk;
-//	int _waterlilyPerChunk;
-//	int _sandPatchesPerChunk;
-//	int _gravelPatchesPerChunk;
 
 public:
 	Biome() = default;
@@ -272,52 +227,6 @@ public:
 		_enableSnow = properties.EnableSnow;
 		_enableRain = properties.EnableRain;
 
-		//_dirtGen = new MinableGenerator(
-		//	BlockStates.Dirt(),
-		//	genSettings.DirtSize);
-		//_gravelOreGen = new MinableGenerator(
-		//	BlockStates.Gravel(),
-		//	genSettings.GravelSize);
-		//_graniteGen = new MinableGenerator(
-		//	BlockStates.Stone(StoneType.Granite),
-		//	genSettings.GraniteSize);
-		//_dioriteGen = new MinableGenerator(
-		//	BlockStates.Stone(StoneType.Diorite),
-		//	genSettings.DioriteSize);
-		//_andesiteGen = new MinableGenerator(
-		//	BlockStates.Stone(StoneType.Andesite),
-		//	genSettings.AndesiteSize);
-		//_coalGen = new MinableGenerator(
-		//	BlockStates.CoalOre(),
-		//	genSettings.CoalSize);
-		//_ironGen = new MinableGenerator(
-		//	BlockStates.IronOre(),
-		//	genSettings.IronSize);
-		//_goldGen = new MinableGenerator(
-		//	BlockStates.GoldOre(),
-		//	genSettings.GoldSize);
-		//_redstoneGen = new MinableGenerator(
-		//	BlockStates.RedstoneOre(),
-		//	genSettings.RedstoneSize);
-		//_diamondGen = new MinableGenerator(
-		//	BlockStates.DiamondOre(),
-		//	genSettings.DiamondSize);
-		//_lapisGen = new MinableGenerator(
-		//	BlockStates.LapisLazuliOre(),
-		//	genSettings.LapisSize);
-
-		//_treesPerChunk = 0; // mc 0
-		//_extraTreeChance = 0.05F; // mc 0.05F
-		//_grassPerChunk = 10;
-		//_flowersPerChunk = 4;
-		//_mushroomsPerChunk = 0;
-
-		//_deadBushPerChunk = 2;
-		//_reedsPerChunk = 50;
-		//_cactiPerChunk = 10;
-
-		//_passiveMobList = new List<MobType>();
-		//_monsterList = new List<MobType>();
 	}
 
 	BiomeId GetBiomeId()
@@ -340,123 +249,9 @@ public:
 		return _heightVariation;
 	}
 
-	
-
-	// 随机获得一个该生物群系可能出现的草
-	/*virtual PlantsType GetRandomGrass(Random rand)
-	{
-		return PlantsType.TallGrass;
-	}*/
-
-	// 随机获得一个该生物群系可能出现的花
-	/*virtual PlantsType GetRandomFlower(Random rand)
-	{
-		double n = rand.NextDouble();
-		if (n > 0.5)
-		{
-			return PlantsType.RedFlower;
-		}
-		else
-		{
-			return PlantsType.YellowFlower;
-		}
-	}*/
-
-	// 随机获得一个该生物群系可能出现的树
-	/*virtual PlantsType GetRandomTree(Random rand)
-	{
-		int n = rand.Next(2);
-		switch (n)
-		{
-		case 0:
-			return PlantsType.Oak;
-		case 1:
-			return PlantsType.Birch;
-		default:
-			return PlantsType.Oak;
-		}
-	}*/
-
-	/*void GenerateOre(MinableGenerator generator, IWorld world, IGrainFactory grainFactory, ChunkColumnStorage &chunk, Random random, BlockWorldPos position, int count, int minHeight, int maxHeight)
-	{
-		if (minHeight > maxHeight)
-		{
-			int tmp = minHeight;
-			minHeight = maxHeight;
-			maxHeight = tmp;
-		}
-		else if (maxHeight == minHeight)
-		{
-			if (minHeight < 255)
-				++maxHeight;
-			else
-				--minHeight;
-		}
-
-		for (int j = 0; j < count; ++j)
-		{
-			BlockWorldPos blockpos = BlockWorldPos.Add(
-				position,
-				random.Next(16),
-				random.Next(maxHeight - minHeight) + minHeight,
-				random.Next(16));
-			generator.Generate(world, grainFactory, chunk, random, blockpos);
-		}
-	}*/
-
-	// 后期添加一些方块，Biome基类主要生成矿物
-	/*virtual void Decorate(IWorld world, IGrainFactory grainFactory, ChunkColumnStorage &chunk, Random rand, BlockWorldPos pos)
-	{
-		GenerateOre(_dirtGen, world, grainFactory, chunk, rand, pos, _genSettings.DirtCount, _genSettings.DirtMaxHeight, _genSettings.DirtMinHeight);
-		GenerateOre(_gravelOreGen, world, grainFactory, chunk, rand, pos, _genSettings.GravelCount, _genSettings.GravelMaxHeight, _genSettings.GravelMinHeight);
-		GenerateOre(_graniteGen, world, grainFactory, chunk, rand, pos, _genSettings.GraniteCount, _genSettings.GraniteMaxHeight, _genSettings.GraniteMinHeight);
-		GenerateOre(_dioriteGen, world, grainFactory, chunk, rand, pos, _genSettings.DioriteCount, _genSettings.DioriteMaxHeight, _genSettings.DioriteMinHeight);
-		GenerateOre(_andesiteGen, world, grainFactory, chunk, rand, pos, _genSettings.AndesiteCount, _genSettings.AndesiteMaxHeight, _genSettings.AndesiteMinHeight);
-
-		GenerateOre(_coalGen, world, grainFactory, chunk, rand, pos, _genSettings.CoalCount, _genSettings.CoalMaxHeight, _genSettings.CoalMinHeight);
-		GenerateOre(_ironGen, world, grainFactory, chunk, rand, pos, _genSettings.IronCount, _genSettings.IronMaxHeight, _genSettings.IronMinHeight);
-		GenerateOre(_goldGen, world, grainFactory, chunk, rand, pos, _genSettings.GoldCount, _genSettings.GoldMaxHeight, _genSettings.GoldMinHeight);
-		GenerateOre(_redstoneGen, world, grainFactory, chunk, rand, pos, _genSettings.RedstoneCount, _genSettings.RedstoneMaxHeight, _genSettings.RedstoneMinHeight);
-		GenerateOre(_diamondGen, world, grainFactory, chunk, rand, pos, _genSettings.DiamondCount, _genSettings.DiamondMaxHeight, _genSettings.DiamondMinHeight);
-		GenerateOre(_lapisGen, world, grainFactory, chunk, rand, pos, _genSettings.LapisCount, _genSettings.LapisCenterHeight + _genSettings.LapisSpread, _genSettings.LapisCenterHeight - _genSettings.LapisSpread);
-	}*/
-
-	// 添加生物群系特有的生物
-	/*virtual void SpawnMob(IWorld world, IGrainFactory grainFactory, ChunkColumnStorage &chunk, Random rand, BlockWorldPos pos)
-	{
-		ChunkWorldPos chunkPos = pos.ToChunkWorldPos();
-		int seed = chunkPos.Z * 16384 + chunkPos.X;
-		Random r = new Random(seed);
-		foreach(MobType eachType in _passiveMobList)
-		{
-			if (r.Next(64) == 0)
-			{
-				PassiveMobSpawner spawner = new PassiveMobSpawner(eachType, 10);
-				spawner.Spawn(world, grainFactory, chunk, rand, new BlockWorldPos(pos.X, pos.Y, pos.Z));
-			}
-		}
-	}*/
-
-	// 添加生物群系特有的怪物
-	/*virtual void SpawnMonster(IWorld world, IGrainFactory grainFactory, ChunkColumnStorage &chunk, Random rand, BlockWorldPos pos)
-	{
-		ChunkWorldPos chunkPos = pos.ToChunkWorldPos();
-		int seed = chunkPos.Z * 16384 + chunkPos.X;
-		Random r = new Random(seed);
-		foreach(MobType eachType in _monsterList)
-		{
-			if (r.Next(64) == 0)
-			{
-				MonsterSpawner spawner = new MonsterSpawner(eachType, 3);
-				spawner.Spawn(world, grainFactory, chunk, rand, new BlockWorldPos(pos.X, pos.Y, pos.Z));
-			}
-		}
-	}
-*/
 	// 产生生物群系特有的方块
 	virtual void GenerateBiomeTerrain(int seaLevel, int randSeed, ChunkColumnStorage &chunk, int chunk_x, int chunk_z, int x_in_chunk, int z_in_chunk, double noiseVal)
 	{
-		//srand(randSeed);
 		BlockState topBlockstate = _topBlock;
 		BlockState fillerBlockstate = _fillerBlock;
 		int surfaceFlag = -1;
@@ -507,14 +302,7 @@ public:
 							chunk(x_in_chunk, y, z_in_chunk) = BlockState(BlockId::Gravel, 0);
 						}
 						else
-						{
 							chunk(x_in_chunk, y, z_in_chunk) = fillerBlockstate;
-							auto a = chunk(x_in_chunk, y, z_in_chunk);
-							a.Id += 0;
-							a.Id += 0;
-							
-								a.Id += 0;
-						}
 					}
 					else if (surfaceFlag > 0)
 					{
@@ -523,9 +311,6 @@ public:
 					}
 				}
 			}
-			auto a = chunk(x_in_chunk, y, z_in_chunk);
-			if (y == 54 && a.Id != 3)
-			int A = 1 + 1;
 		}
 	}
 };
@@ -542,24 +327,8 @@ public:
 		_baseHeight = -1.0F;
 		_heightVariation = 0.1F;
 
-		/*_passiveMobList.Add(MobType.Squid);*/
 	}
 
-	// 添加生物群系特有的生物
-	/*public override void SpawnMob(IWorld world, IGrainFactory grainFactory, ChunkColumnStorage &chunk, Random rand, BlockWorldPos pos)
-	{
-		ChunkWorldPos chunkPos = pos.ToChunkWorldPos();
-		int seed = chunkPos.Z * 16384 + chunkPos.X;
-		Random r = new Random(seed);
-		foreach(MobType eachType in _passiveMobList)
-		{
-			if (r.Next(32) == 0)
-			{
-				PassiveMobSpawner spawner = new PassiveMobSpawner(eachType, 15);
-				spawner.Spawn(world, grainFactory, chunk, rand, new BlockWorldPos(pos.X, pos.Y, pos.Z));
-			}
-		}
-	}*/
 };
 
 class BiomePlains : public Biome
@@ -576,158 +345,7 @@ public:
 		_rainfall = 0.4F;
 		_enableRain = true;
 
-		/*_passiveMobList.Add(MobType.Pig);
-		_passiveMobList.Add(MobType.Sheep);
-		_passiveMobList.Add(MobType.Cow);
-		_passiveMobList.Add(MobType.Chicken);
-
-		_monsterList.Add(MobType.Creeper);
-		_monsterList.Add(MobType.Zombie);
-		_monsterList.Add(MobType.Skeleton);
-		_monsterList.Add(MobType.Spider);*/
 	}
-
-	//// 添加其他东西
-	//public override void Decorate(IWorld world, IGrainFactory grainFactory, ChunkColumnStorage &chunk, Random rand, BlockWorldPos pos)
-	//{
-	//	float grassColor = (_grassColorNoise.Noise((pos.X + 8) / 200.0F, 0.0F, (pos.Z + 8) / 200.0F) - 0.5F) * 2;
-
-	//	if (grassColor < -0.8F)
-	//	{
-	//		_flowersPerChunk = 15;
-	//		_grassPerChunk = 5 * 7;
-	//		GenDoubleFlowers(world, grainFactory, chunk, rand, pos);
-	//	}
-	//	else
-	//	{
-	//		_flowersPerChunk = 4;
-	//		_grassPerChunk = 10 * 7;
-	//	}
-
-	//	GenGrass(world, grainFactory, chunk, rand, pos);
-	//	GenFlowers(world, grainFactory, chunk, rand, pos);
-	//	GenDoubleGrass(world, grainFactory, chunk, rand, pos);
-
-	//	int treesPerChunk = _treesPerChunk;
-
-	//	if (rand.NextDouble() < _extraTreeChance)
-	//	{
-	//		++treesPerChunk;
-	//	}
-
-	//	for (int num = 0; num < treesPerChunk; ++num)
-	//	{
-	//		int x = rand.Next(12) + 2;
-	//		int z = rand.Next(12) + 2;
-
-	//		TreeGenerator treeGenerator = new TreeGenerator(5, false, GetRandomTree(rand));
-
-	//		// 获得地表面高度
-	//		int h = 0;
-	//		for (int y = 255; y >= 0; --y)
-	//		{
-	//			if (!chunk[x, y, z].IsAir())
-	//			{
-	//				h = y + 1;
-	//				break;
-	//			}
-	//		}
-
-	//		treeGenerator.Generate(world, grainFactory, chunk, this, rand, new BlockWorldPos(pos.X + x, h, pos.Z + z));
-	//	}
-
-	//	base.Decorate(world, grainFactory, chunk, rand, pos);
-	//}
-
-	//// 添加生物群系特有的生物
-	//public override void SpawnMob(IWorld world, IGrainFactory grainFactory, ChunkColumnStorage &chunk, Random rand, BlockWorldPos pos)
-	//{
-	//	ChunkWorldPos chunkPos = pos.ToChunkWorldPos();
-	//	int seed = chunkPos.Z * 16384 + chunkPos.X;
-	//	Random r = new Random(seed);
-	//	foreach(MobType eachType in _passiveMobList)
-	//	{
-	//		if (r.Next(32) == 0)
-	//		{
-	//			PassiveMobSpawner spawner = new PassiveMobSpawner(eachType, 15);
-	//			spawner.Spawn(world, grainFactory, chunk, rand, new BlockWorldPos(pos.X, pos.Y, pos.Z));
-	//		}
-	//	}
-	//}
-
-	//private void GenGrass(IWorld world, IGrainFactory grainFactory, ChunkColumnStorage &chunk, Random random, BlockWorldPos pos)
-	//{
-	//	int grassMaxNum = random.Next(_grassPerChunk);
-	//	GrassGenerator generator = new GrassGenerator();
-	//	for (int grassNum = 0; grassNum < grassMaxNum; ++grassNum)
-	//	{
-	//		int x = random.Next(16);
-	//		int z = random.Next(16);
-	//		for (int y = 255; y >= 1; --y)
-	//		{
-	//			if (!chunk[x, y, z].IsAir())
-	//			{
-	//				generator.Generate(world, grainFactory, chunk, this, random, new BlockWorldPos(pos.X + x, y + 1, pos.Z + z));
-	//				break;
-	//			}
-	//		}
-	//	}
-	//}
-
-	//private void GenFlowers(IWorld world, IGrainFactory grainFactory, ChunkColumnStorage &chunk, Random random, BlockWorldPos pos)
-	//{
-	//	int flowersMaxNum = random.Next(_flowersPerChunk);
-	//	FlowersGenerator generator = new FlowersGenerator();
-	//	for (int flowersNum = 0; flowersNum < flowersMaxNum; ++flowersNum)
-	//	{
-	//		int x = random.Next(16);
-	//		int z = random.Next(16);
-	//		for (int y = 255; y >= 1; --y)
-	//		{
-	//			if (!chunk[x, y, z].IsAir())
-	//			{
-	//				generator.Generate(world, grainFactory, chunk, this, random, new BlockWorldPos(pos.X + x, y + 1, pos.Z + z));
-	//				break;
-	//			}
-	//		}
-	//	}
-	//}
-
-	//private void GenDoubleFlowers(IWorld world, IGrainFactory grainFactory, ChunkColumnStorage &chunk, Random random, BlockWorldPos pos)
-	//{
-	//	DoubleFlowersGenerator generator = new DoubleFlowersGenerator(PlantsType.Sunflower);
-	//	for (int flowersNum = 0; flowersNum < 10; ++flowersNum)
-	//	{
-	//		int x = random.Next(16);
-	//		int z = random.Next(16);
-	//		for (int y = 255; y >= 1; --y)
-	//		{
-	//			if (!chunk[x, y, z].IsAir())
-	//			{
-	//				generator.Generate(world, grainFactory, chunk, this, random, new BlockWorldPos(pos.X + x, y + 1, pos.Z + z));
-	//				break;
-	//			}
-	//		}
-	//	}
-	//}
-
-	//private void GenDoubleGrass(IWorld world, IGrainFactory grainFactory, ChunkColumnStorage &chunk, Random random, BlockWorldPos pos)
-	//{
-	//	DoubleGrassGenerator generator = new DoubleGrassGenerator(PlantsType.DoubleTallgrass);
-	//	for (int grassNum = 0; grassNum < 2; ++grassNum)
-	//	{
-	//		int x = random.Next(16);
-	//		int z = random.Next(16);
-	//		for (int y = 255; y >= 1; --y)
-	//		{
-	//			if (!chunk[x, y, z].IsAir())
-	//			{
-	//				generator.Generate(world, grainFactory, chunk, this, random, new BlockWorldPos(pos.X + x, y + 1, pos.Z + z));
-	//				break;
-	//			}
-	//		}
-	//	}
-	//}
 };
 
 class BiomeDesert : public Biome
@@ -746,64 +364,7 @@ public:
 
 		_topBlock = BlockState(BlockId::Sand, SandType::Sand);
 		_fillerBlock = BlockState(BlockId::Sand, SandType::Sand);
-		/*_treesPerChunk = -999;
-		_deadBushPerChunk = 2;
-		_reedsPerChunk = 50;
-		_cactiPerChunk = 10;
-
-		_monsterList.Add(MobType.Creeper);
-		_monsterList.Add(MobType.Zombie);
-		_monsterList.Add(MobType.Skeleton);
-		_monsterList.Add(MobType.Spider);*/
 	}
-
-	// 添加其他东西
-	//public override void Decorate(IWorld world, IGrainFactory grainFactory, ChunkColumnStorage &chunk, Random rand, BlockWorldPos pos)
-	//{
-	//	GenCacti(world, grainFactory, chunk, rand, pos);
-
-	//	// TODO 生成仙人掌和枯木
-	//	base.Decorate(world, grainFactory, chunk, rand, pos);
-	//}
-
-	//// 添加生物群系特有的生物
-	//public override void SpawnMob(IWorld world, IGrainFactory grainFactory, ChunkColumnStorage &chunk, Random rand, BlockWorldPos pos)
-	//{
-	//	ChunkWorldPos chunkPos = pos.ToChunkWorldPos();
-	//	int seed = chunkPos.Z * 16384 + chunkPos.X;
-	//	Random r = new Random(seed);
-	//	foreach(MobType eachType in _passiveMobList)
-	//	{
-	//		if (r.Next(64) == 0)
-	//		{
-	//			PassiveMobSpawner spawner = new PassiveMobSpawner(eachType, 10);
-	//			spawner.Spawn(world, grainFactory, chunk, rand, new BlockWorldPos(pos.X, pos.Y, pos.Z));
-	//		}
-	//	}
-	//}
-
-	//private void GenCacti(IWorld world, IGrainFactory grainFactory, ChunkColumnStorage &chunk, Random random, BlockWorldPos pos)
-	//{
-	//	int cactiMaxNum = random.Next(_cactiPerChunk);
-
-	//	if (random.Next(64) == 0)
-	//	{
-	//		CactiGenerator generator = new CactiGenerator();
-	//		for (int cactiNum = 0; cactiNum < cactiMaxNum; ++cactiNum)
-	//		{
-	//			int x = random.Next(14) + 1;
-	//			int z = random.Next(14) + 1;
-	//			for (int y = 255; y >= 1; --y)
-	//			{
-	//				if (!chunk[x, y, z].IsAir())
-	//				{
-	//					generator.Generate(world, grainFactory, chunk, this, random, new BlockWorldPos(pos.X + x, y + 1, pos.Z + z));
-	//					break;
-	//				}
-	//			}
-	//		}
-	//	}
-	//}
 };
 
 enum BiomeHillType
@@ -845,39 +406,7 @@ public:
 			_rainfall = 0.3F;
 			_enableRain = true;
 		}
-
-		/*_passiveMobList.Add(MobType.Pig);
-		_passiveMobList.Add(MobType.Sheep);
-		_passiveMobList.Add(MobType.Cow);
-		_passiveMobList.Add(MobType.Chicken);
-
-		_monsterList.Add(MobType.Creeper);
-		_monsterList.Add(MobType.Zombie);
-		_monsterList.Add(MobType.Skeleton);
-		_monsterList.Add(MobType.Spider);*/
 	}
-
-	// 添加其他东西
-	/*public override void Decorate(IWorld world, IGrainFactory grainFactory, ChunkColumnStorage &chunk, Random rand, BlockWorldPos pos)
-	{
-		GenTrees(world, grainFactory, chunk, rand, pos);
-	}*/
-
-	// 添加生物群系特有的生物
-	/*public override void SpawnMob(IWorld world, IGrainFactory grainFactory, ChunkColumnStorage &chunk, Random rand, BlockWorldPos pos)
-	{
-		ChunkWorldPos chunkPos = pos.ToChunkWorldPos();
-		int seed = chunkPos.Z * 16384 + chunkPos.X;
-		Random r = new Random(seed);
-		foreach(MobType eachType in _passiveMobList)
-		{
-			if (r.Next(32) == 0)
-			{
-				PassiveMobSpawner spawner = new PassiveMobSpawner(eachType, 15);
-				spawner.Spawn(world, grainFactory, chunk, rand, new BlockWorldPos(pos.X, pos.Y, pos.Z));
-			}
-		}
-	}*/
 
 	void GenerateBiomeTerrain(int seaLevel, int randSeed, ChunkColumnStorage &chunk, int chunk_x, int chunk_z, int x_in_chunk, int z_in_chunk, double noiseVal)
 	{
@@ -897,37 +426,6 @@ public:
 
 		Biome::GenerateBiomeTerrain(seaLevel, randSeed, chunk, chunk_x, chunk_z, x_in_chunk, z_in_chunk, noiseVal);
 	}
-
-	//public void GenTrees(IWorld world, IGrainFactory grainFactory, ChunkColumnStorage &chunk, Random random, BlockWorldPos pos)
-	//{
-	//	int treesPerChunk = _treesPerChunk;
-
-	//	if (random.NextDouble() < _extraTreeChance)
-	//	{
-	//		++treesPerChunk;
-	//	}
-
-	//	for (int num = 0; num < treesPerChunk; ++num)
-	//	{
-	//		int x = random.Next(12) + 2;
-	//		int z = random.Next(12) + 2;
-
-	//		TreeGenerator treeGenerator = new TreeGenerator(5, false, GetRandomTree(random));
-
-	//		// 获得地表面高度
-	//		int h = 0;
-	//		for (int y = 255; y >= 0; --y)
-	//		{
-	//			if (!chunk[x, y, z].IsAir())
-	//			{
-	//				h = y + 1;
-	//				break;
-	//			}
-	//		}
-
-	//		treeGenerator.Generate(world, grainFactory, chunk, this, random, new BlockWorldPos(pos.X + x, h, pos.Z + z));
-	//	}
-	//}
 };
 
 class BiomeForest : public Biome
@@ -938,181 +436,18 @@ public:
 	{
 		_name = "forest";
 		_biomeId = BiomeId::Forest;
-		/*_treesPerChunk = 10;
-		_grassPerChunk = 2;*/
-
+	
 		_temperature = 0.7F;
 		_rainfall = 0.8F;
 		_enableRain = true;
 
-		/*_passiveMobList.Add(MobType.Pig);
-		_passiveMobList.Add(MobType.Sheep);
-		_passiveMobList.Add(MobType.Cow);
-		_passiveMobList.Add(MobType.Chicken);
-
-		_monsterList.Add(MobType.Creeper);
-		_monsterList.Add(MobType.Zombie);
-		_monsterList.Add(MobType.Skeleton);
-		_monsterList.Add(MobType.Spider);*/
 	}
-
-	// 添加其他东西
-	//public override void Decorate(IWorld world, IGrainFactory grainFactory, ChunkColumnStorage &chunk, Random rand, BlockWorldPos pos)
-	//{
-	//	float grassColor = (_grassColorNoise.Noise((pos.X + 8) / 200.0F, 0.0F, (pos.Z + 8) / 200.0F) - 0.5F) * 2;
-
-	//	if (grassColor < -0.8F)
-	//	{
-	//		_flowersPerChunk = 15;
-	//		_grassPerChunk = 5 * 7;
-	//		GenDoubleFlowers(world, grainFactory, chunk, rand, pos);
-	//	}
-	//	else
-	//	{
-	//		_flowersPerChunk = 4;
-	//		_grassPerChunk = 10 * 7;
-	//	}
-
-	//	GenGrass(world, grainFactory, chunk, rand, pos);
-	//	GenFlowers(world, grainFactory, chunk, rand, pos);
-	//	GenDoubleGrass(world, grainFactory, chunk, rand, pos);
-
-	//	int treesPerChunk = _treesPerChunk;
-
-	//	if (rand.NextDouble() < _extraTreeChance)
-	//	{
-	//		++treesPerChunk;
-	//	}
-
-	//	for (int num = 0; num < treesPerChunk; ++num)
-	//	{
-	//		int x = rand.Next(12) + 2;
-	//		int z = rand.Next(12) + 2;
-
-	//		TreeGenerator treeGenerator = new TreeGenerator(5, false, GetRandomTree(rand));
-
-	//		// 获得地表面高度
-	//		int h = 0;
-	//		for (int y = 255; y >= 0; --y)
-	//		{
-	//			if (!chunk[x, y, z].IsAir())
-	//			{
-	//				h = y + 1;
-	//				break;
-	//			}
-	//		}
-
-	//		treeGenerator.Generate(world, grainFactory, chunk, this, rand, new BlockWorldPos(pos.X + x, h, pos.Z + z));
-	//	}
-
-	//	base.Decorate(world, grainFactory, chunk, rand, pos);
-	//}
-
-	//// 添加生物群系特有的生物
-	//public override void SpawnMob(IWorld world, IGrainFactory grainFactory, ChunkColumnStorage &chunk, Random rand, BlockWorldPos pos)
-	//{
-	//	ChunkWorldPos chunkPos = pos.ToChunkWorldPos();
-	//	int seed = chunkPos.Z * 16384 + chunkPos.X;
-	//	Random r = new Random(seed);
-	//	foreach(MobType eachType in _passiveMobList)
-	//	{
-	//		if (r.Next(32) == 0)
-	//		{
-	//			PassiveMobSpawner spawner = new PassiveMobSpawner(eachType, 15);
-	//			spawner.Spawn(world, grainFactory, chunk, rand, new BlockWorldPos(pos.X, pos.Y, pos.Z));
-	//		}
-	//	}
-	//}
-
-	//private void GenGrass(IWorld world, IGrainFactory grainFactory, ChunkColumnStorage &chunk, Random random, BlockWorldPos pos)
-	//{
-	//	int grassMaxNum = random.Next(_grassPerChunk);
-	//	GrassGenerator generator = new GrassGenerator();
-	//	for (int grassNum = 0; grassNum < grassMaxNum; ++grassNum)
-	//	{
-	//		int x = random.Next(16);
-	//		int z = random.Next(16);
-	//		for (int y = 255; y >= 1; --y)
-	//		{
-	//			if (!chunk[x, y, z].IsAir())
-	//			{
-	//				generator.Generate(world, grainFactory, chunk, this, random, new BlockWorldPos(pos.X + x, y + 1, pos.Z + z));
-	//				break;
-	//			}
-	//		}
-	//	}
-	//}
-
-	//private void GenFlowers(IWorld world, IGrainFactory grainFactory, ChunkColumnStorage &chunk, Random random, BlockWorldPos pos)
-	//{
-	//	int flowersMaxNum = random.Next(_flowersPerChunk);
-	//	FlowersGenerator generator = new FlowersGenerator();
-	//	for (int flowersNum = 0; flowersNum < flowersMaxNum; ++flowersNum)
-	//	{
-	//		int x = random.Next(16);
-	//		int z = random.Next(16);
-	//		for (int y = 255; y >= 1; --y)
-	//		{
-	//			if (!chunk[x, y, z].IsAir())
-	//			{
-	//				generator.Generate(world, grainFactory, chunk, this, random, new BlockWorldPos(pos.X + x, y + 1, pos.Z + z));
-	//				break;
-	//			}
-	//		}
-	//	}
-	//}
-
-	//private void GenDoubleFlowers(IWorld world, IGrainFactory grainFactory, ChunkColumnStorage &chunk, Random random, BlockWorldPos pos)
-	//{
-	//	DoubleFlowersGenerator generator = new DoubleFlowersGenerator(PlantsType.Sunflower);
-	//	for (int flowersNum = 0; flowersNum < 10; ++flowersNum)
-	//	{
-	//		int x = random.Next(16);
-	//		int z = random.Next(16);
-	//		for (int y = 255; y >= 1; --y)
-	//		{
-	//			if (!chunk[x, y, z].IsAir())
-	//			{
-	//				generator.Generate(world, grainFactory, chunk, this, random, new BlockWorldPos(pos.X + x, y + 1, pos.Z + z));
-	//				break;
-	//			}
-	//		}
-	//	}
-	//}
-
-	//private void GenDoubleGrass(IWorld world, IGrainFactory grainFactory, ChunkColumnStorage &chunk, Random random, BlockWorldPos pos)
-	//{
-	//	DoubleGrassGenerator generator = new DoubleGrassGenerator(PlantsType.DoubleTallgrass);
-	//	for (int grassNum = 0; grassNum < 2; ++grassNum)
-	//	{
-	//		int x = random.Next(16);
-	//		int z = random.Next(16);
-	//		for (int y = 255; y >= 1; --y)
-	//		{
-	//			if (!chunk[x, y, z].IsAir())
-	//			{
-	//				generator.Generate(world, grainFactory, chunk, this, random, new BlockWorldPos(pos.X + x, y + 1, pos.Z + z));
-	//				break;
-	//			}
-	//		}
-	//	}
-	//}
-};
-
-namespace BiomeTaigaType
-{
-	int Normal = 1;
-	int Mega = 2;
-	int MegaSpruce = 3;
 };
 
 class BiomeTaiga : public Biome
 {
-private:
-	//BiomeTaigaType _type;
-
 public:
-	BiomeTaiga(/*BiomeTaigaType type, */BiomeProperties properties, GeneratorSettings genSettings)
+	BiomeTaiga(BiomeProperties properties, GeneratorSettings genSettings)
 		: Biome(properties, genSettings)
 	{
 		_name = "taiga";
@@ -1121,200 +456,11 @@ public:
 		_baseHeight = 0.2F;
 		_heightVariation = 0.2F;
 		_temperature = 0.25F;
-
-		/*_treesPerChunk = 10;
-		_grassPerChunk = 2;*/
-
 		_temperature = 0.7F;
 		_rainfall = 0.8F;
 		_enableRain = true;
 
-		//_type = type;
-
-		/*if (type != BiomeTaigaType.Mega && type != BiomeTaigaType.MegaSpruce)
-		{
-			_grassPerChunk = 1;
-			_mushroomsPerChunk = 1;
-		}
-		else
-		{
-			_grassPerChunk = 7;
-			_deadBushPerChunk = 1;
-			_mushroomsPerChunk = 3;
-		}
-
-		_passiveMobList.Add(MobType.Pig);
-		_passiveMobList.Add(MobType.Sheep);
-		_passiveMobList.Add(MobType.Cow);
-		_passiveMobList.Add(MobType.Chicken);
-
-		_monsterList.Add(MobType.Creeper);
-		_monsterList.Add(MobType.Zombie);
-		_monsterList.Add(MobType.Skeleton);
-		_monsterList.Add(MobType.Spider);*/
 	}
-
-	// 生物群中可能的树
-	// 随机获得一个该生物群系可能出现的树
-	//public override PlantsType GetRandomTree(Random rand)
-	//{
-	//	return PlantsType.Spruce;
-	//}
-
-	//// 添加其他东西
-	//public override void Decorate(IWorld world, IGrainFactory grainFactory, ChunkColumnStorage &chunk, Random rand, BlockWorldPos pos)
-	//{
-	//	float grassColor = (_grassColorNoise.Noise((pos.X + 8) / 200.0F, 0.0F, (pos.Z + 8) / 200.0F) - 0.5F) * 2;
-
-	//	if (grassColor < -0.8F)
-	//	{
-	//		_flowersPerChunk = 15;
-	//		_grassPerChunk = 5 * 7;
-	//		GenDoubleFlowers(world, grainFactory, chunk, rand, pos);
-	//	}
-	//	else
-	//	{
-	//		_flowersPerChunk = 4;
-	//		_grassPerChunk = 10 * 7;
-	//	}
-
-	//	GenGrass(world, grainFactory, chunk, rand, pos);
-	//	GenFlowers(world, grainFactory, chunk, rand, pos);
-	//	GenDoubleGrass(world, grainFactory, chunk, rand, pos);
-
-	//	int treesPerChunk = _treesPerChunk;
-
-	//	if (rand.NextDouble() < _extraTreeChance)
-	//	{
-	//		++treesPerChunk;
-	//	}
-
-	//	for (int num = 0; num < treesPerChunk; ++num)
-	//	{
-	//		int x = rand.Next(10) + 3;
-	//		int z = rand.Next(10) + 3;
-
-	//		AbstractTreeGenerator treeGenerator;
-	//		PlantsType type = GetRandomTree(rand);
-
-	//		if (type == PlantsType.Spruce)
-	//		{
-	//			if (x % 2 == 0)
-	//				treeGenerator = new Taiga2Generator(5, false, type);
-	//			else
-	//				treeGenerator = new TaigaGenerator(5, false, type);
-	//		}
-	//		else
-	//		{
-	//			treeGenerator = new TreeGenerator(5, false, type);
-	//		}
-
-	//		// 获得地表面高度
-	//		int h = 0;
-	//		for (int y = 255; y >= 0; --y)
-	//		{
-	//			if (!chunk[x, y, z].IsAir())
-	//			{
-	//				h = y + 1;
-	//				break;
-	//			}
-	//		}
-
-	//		treeGenerator.Generate(world, grainFactory, chunk, this, rand, new BlockWorldPos(pos.X + x, h, pos.Z + z));
-	//	}
-
-	//	base.Decorate(world, grainFactory, chunk, rand, pos);
-	//}
-
-	//// 添加生物群系特有的生物
-	//public override void SpawnMob(IWorld world, IGrainFactory grainFactory, ChunkColumnStorage &chunk, Random rand, BlockWorldPos pos)
-	//{
-	//	ChunkWorldPos chunkPos = pos.ToChunkWorldPos();
-	//	int seed = chunkPos.Z * 16384 + chunkPos.X;
-	//	Random r = new Random(seed);
-	//	foreach(MobType eachType in _passiveMobList)
-	//	{
-	//		if (r.Next(32) == 0)
-	//		{
-	//			PassiveMobSpawner spawner = new PassiveMobSpawner(eachType, 15);
-	//			spawner.Spawn(world, grainFactory, chunk, rand, new BlockWorldPos(pos.X, pos.Y, pos.Z));
-	//		}
-	//	}
-	//}
-
-	//private void GenGrass(IWorld world, IGrainFactory grainFactory, ChunkColumnStorage &chunk, Random random, BlockWorldPos pos)
-	//{
-	//	int grassMaxNum = random.Next(_grassPerChunk);
-	//	GrassGenerator generator = new GrassGenerator();
-	//	for (int grassNum = 0; grassNum < grassMaxNum; ++grassNum)
-	//	{
-	//		int x = random.Next(16);
-	//		int z = random.Next(16);
-	//		for (int y = 255; y >= 1; --y)
-	//		{
-	//			if (!chunk[x, y, z].IsAir())
-	//			{
-	//				generator.Generate(world, grainFactory, chunk, this, random, new BlockWorldPos(pos.X + x, y + 1, pos.Z + z));
-	//				break;
-	//			}
-	//		}
-	//	}
-	//}
-
-	//private void GenFlowers(IWorld world, IGrainFactory grainFactory, ChunkColumnStorage &chunk, Random random, BlockWorldPos pos)
-	//{
-	//	int flowersMaxNum = random.Next(_flowersPerChunk);
-	//	FlowersGenerator generator = new FlowersGenerator();
-	//	for (int flowersNum = 0; flowersNum < flowersMaxNum; ++flowersNum)
-	//	{
-	//		int x = random.Next(16);
-	//		int z = random.Next(16);
-	//		for (int y = 255; y >= 1; --y)
-	//		{
-	//			if (!chunk[x, y, z].IsAir())
-	//			{
-	//				generator.Generate(world, grainFactory, chunk, this, random, new BlockWorldPos(pos.X + x, y + 1, pos.Z + z));
-	//				break;
-	//			}
-	//		}
-	//	}
-	//}
-
-	//private void GenDoubleFlowers(IWorld world, IGrainFactory grainFactory, ChunkColumnStorage &chunk, Random random, BlockWorldPos pos)
-	//{
-	//	DoubleFlowersGenerator generator = new DoubleFlowersGenerator(PlantsType.Sunflower);
-	//	for (int flowersNum = 0; flowersNum < 10; ++flowersNum)
-	//	{
-	//		int x = random.Next(16);
-	//		int z = random.Next(16);
-	//		for (int y = 255; y >= 1; --y)
-	//		{
-	//			if (!chunk[x, y, z].IsAir())
-	//			{
-	//				generator.Generate(world, grainFactory, chunk, this, random, new BlockWorldPos(pos.X + x, y + 1, pos.Z + z));
-	//				break;
-	//			}
-	//		}
-	//	}
-	//}
-
-	//private void GenDoubleGrass(IWorld world, IGrainFactory grainFactory, ChunkColumnStorage &chunk, Random random, BlockWorldPos pos)
-	//{
-	//	DoubleGrassGenerator generator = new DoubleGrassGenerator(PlantsType.DoubleTallgrass);
-	//	for (int grassNum = 0; grassNum < 2; ++grassNum)
-	//	{
-	//		int x = random.Next(16);
-	//		int z = random.Next(16);
-	//		for (int y = 255; y >= 1; --y)
-	//		{
-	//			if (!chunk[x, y, z].IsAir())
-	//			{
-	//				generator.Generate(world, grainFactory, chunk, this, random, new BlockWorldPos(pos.X + x, y + 1, pos.Z + z));
-	//				break;
-	//			}
-	//		}
-	//	}
-	//}
 };
 
 class BiomeSwamp : public Biome
@@ -1326,17 +472,6 @@ public:
 		_name = "swampland";
 		_biomeId = BiomeId::Swampland;
 
-		/*_treesPerChunk = 2;
-		_flowersPerChunk = 1;
-		_deadBushPerChunk = 1;
-		_mushroomsPerChunk = 8;
-		_reedsPerChunk = 10;
-		_clayPerChunk = 1;
-		_waterlilyPerChunk = 4;
-		_sandPatchesPerChunk = 0;
-		_gravelPatchesPerChunk = 0;
-		_grassPerChunk = 5;*/
-
 		_baseHeight = -0.2F;
 		_heightVariation = 0.1F;
 		_temperature = 0.8F;
@@ -1344,148 +479,6 @@ public:
 		_enableRain = true;
 		_waterColor = 14745518;
 	}
-
-	//// 添加其他东西
-	//public override void Decorate(IWorld world, IGrainFactory grainFactory, ChunkColumnStorage &chunk, Random rand, BlockWorldPos pos)
-	//{
-	//	float grassColor = (_grassColorNoise.Noise((pos.X + 8) / 200.0F, 0.0F, (pos.Z + 8) / 200.0F) - 0.5F) * 2;
-
-	//	if (grassColor < -0.8F)
-	//	{
-	//		_flowersPerChunk = 15;
-	//		_grassPerChunk = 5 * 7;
-	//		GenDoubleFlowers(world, grainFactory, chunk, rand, pos);
-	//	}
-	//	else
-	//	{
-	//		_flowersPerChunk = 4;
-	//		_grassPerChunk = 10 * 7;
-	//	}
-
-	//	GenGrass(world, grainFactory, chunk, rand, pos);
-	//	GenFlowers(world, grainFactory, chunk, rand, pos);
-	//	GenDoubleGrass(world, grainFactory, chunk, rand, pos);
-
-	//	int treesPerChunk = _treesPerChunk;
-
-	//	if (rand.NextDouble() < _extraTreeChance)
-	//	{
-	//		++treesPerChunk;
-	//	}
-
-	//	for (int num = 0; num < treesPerChunk; ++num)
-	//	{
-	//		int x = rand.Next(10) + 3;
-	//		int z = rand.Next(10) + 3;
-
-	//		TreeGenerator treeGenerator = new TreeGenerator(5, true, GetRandomTree(rand));
-
-	//		// 获得地表面高度
-	//		int h = 0;
-	//		for (int y = 255; y >= 0; --y)
-	//		{
-	//			if (!chunk[x, y, z].IsAir())
-	//			{
-	//				h = y + 1;
-	//				break;
-	//			}
-	//		}
-
-	//		treeGenerator.Generate(world, grainFactory, chunk, this, rand, new BlockWorldPos(pos.X + x, h, pos.Z + z));
-	//	}
-
-	//	base.Decorate(world, grainFactory, chunk, rand, pos);
-	//}
-
-	//// 添加生物群系特有的生物
-	//public override void SpawnMob(IWorld world, IGrainFactory grainFactory, ChunkColumnStorage &chunk, Random rand, BlockWorldPos pos)
-	//{
-	//	ChunkWorldPos chunkPos = pos.ToChunkWorldPos();
-	//	int seed = chunkPos.Z * 16384 + chunkPos.X;
-	//	Random r = new Random(seed);
-	//	foreach(MobType eachType in _passiveMobList)
-	//	{
-	//		if (r.Next(32) == 0)
-	//		{
-	//			PassiveMobSpawner spawner = new PassiveMobSpawner(eachType, 10);
-	//			spawner.Spawn(world, grainFactory, chunk, rand, new BlockWorldPos(pos.X, pos.Y, pos.Z));
-	//		}
-	//	}
-	//}
-
-	//private void GenGrass(IWorld world, IGrainFactory grainFactory, ChunkColumnStorage &chunk, Random random, BlockWorldPos pos)
-	//{
-	//	int grassMaxNum = random.Next(_grassPerChunk);
-	//	GrassGenerator generator = new GrassGenerator();
-	//	for (int grassNum = 0; grassNum < grassMaxNum; ++grassNum)
-	//	{
-	//		int x = random.Next(16);
-	//		int z = random.Next(16);
-	//		for (int y = 255; y >= 1; --y)
-	//		{
-	//			if (!chunk[x, y, z].IsAir())
-	//			{
-	//				generator.Generate(world, grainFactory, chunk, this, random, new BlockWorldPos(pos.X + x, y + 1, pos.Z + z));
-	//				break;
-	//			}
-	//		}
-	//	}
-	//}
-
-	//private void GenFlowers(IWorld world, IGrainFactory grainFactory, ChunkColumnStorage &chunk, Random random, BlockWorldPos pos)
-	//{
-	//	int flowersMaxNum = random.Next(_flowersPerChunk);
-	//	FlowersGenerator generator = new FlowersGenerator();
-	//	for (int flowersNum = 0; flowersNum < flowersMaxNum; ++flowersNum)
-	//	{
-	//		int x = random.Next(16);
-	//		int z = random.Next(16);
-	//		for (int y = 255; y >= 1; --y)
-	//		{
-	//			if (!chunk[x, y, z].IsAir())
-	//			{
-	//				generator.Generate(world, grainFactory, chunk, this, random, new BlockWorldPos(pos.X + x, y + 1, pos.Z + z));
-	//				break;
-	//			}
-	//		}
-	//	}
-	//}
-
-	//private void GenDoubleFlowers(IWorld world, IGrainFactory grainFactory, ChunkColumnStorage &chunk, Random random, BlockWorldPos pos)
-	//{
-	//	DoubleFlowersGenerator generator = new DoubleFlowersGenerator(PlantsType.Sunflower);
-	//	for (int flowersNum = 0; flowersNum < 10; ++flowersNum)
-	//	{
-	//		int x = random.Next(16);
-	//		int z = random.Next(16);
-	//		for (int y = 255; y >= 1; --y)
-	//		{
-	//			if (!chunk[x, y, z].IsAir())
-	//			{
-	//				generator.Generate(world, grainFactory, chunk, this, random, new BlockWorldPos(pos.X + x, y + 1, pos.Z + z));
-	//				break;
-	//			}
-	//		}
-	//	}
-	//}
-
-	//private void GenDoubleGrass(IWorld world, IGrainFactory grainFactory, ChunkColumnStorage &chunk, Random random, BlockWorldPos pos)
-	//{
-	//	DoubleGrassGenerator generator = new DoubleGrassGenerator(PlantsType.DoubleTallgrass);
-	//	for (int grassNum = 0; grassNum < 2; ++grassNum)
-	//	{
-	//		int x = random.Next(16);
-	//		int z = random.Next(16);
-	//		for (int y = 255; y >= 1; --y)
-	//		{
-	//			if (!chunk[x, y, z].IsAir())
-	//			{
-	//				generator.Generate(world, grainFactory, chunk, this, random, new BlockWorldPos(pos.X + x, y + 1, pos.Z + z));
-	//				break;
-	//			}
-	//		}
-	//	}
-	//}
 };
 
 class BiomeRiver : public Biome
@@ -1518,11 +511,6 @@ public:
 
 		_topBlock = BlockState(BlockId::Sand, SandType::Sand);
 		_fillerBlock = BlockState(BlockId::Sand, SandType::Sand);
-
-		/*_treesPerChunk = -999;
-		_deadBushPerChunk = 0;
-		_reedsPerChunk = 0;
-		_cactiPerChunk = 0;*/
 	}
 };
 
@@ -1542,7 +530,7 @@ static Biome GetBiome(int id, GeneratorSettings settings)
 	case BiomeId::Forest:
 		return BiomeForest(BiomeProperties(), settings);
 	case BiomeId::Taiga:
-		return BiomeTaiga(/*BiomeTaigaType::Normal, */BiomeProperties(), settings);
+		return BiomeTaiga(BiomeProperties(), settings);
 	case BiomeId::Swampland:
 		return BiomeSwamp(BiomeProperties(), settings);
 	case BiomeId::River:

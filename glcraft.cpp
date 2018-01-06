@@ -85,9 +85,9 @@ static bool select_using_depthbuffer = true;
 //#define SCX 32
 //#define SCY 16
 //#define SCZ 32
-#define SCX 32
+#define SCX 30
 #define SCY 16
-#define SCZ 32
+#define SCZ 30
 
 int blocks[CX*SCX][CY*SCY][CZ*SCZ];
 
