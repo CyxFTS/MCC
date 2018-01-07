@@ -41,5 +41,6 @@ void main()
 	//color = vec4(result, 1);
 	color = vec4(ambient + diffuse + specular, 1.0);
 	color = vec4(result, 0.7);
+	// color = vec4(gridColor, 0.7);
 	// 0.8f, 0.6f, 0.4f, 1.0f);
 }

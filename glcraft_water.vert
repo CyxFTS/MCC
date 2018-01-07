@@ -37,7 +37,7 @@ const float upperBound = 0.2;
 // Array of waves
 const int MAX_SIZE = 3;
 const int SIZE = 3;
-Wave w[MAX_SIZE] = Wave[MAX_SIZE](w3, w1, w2);
+Wave w[MAX_SIZE] = Wave[MAX_SIZE](w1, w2, w3);
 // New position
 vec3 Position = position;
 
@@ -126,9 +126,9 @@ void main()
 	Normal = normal;
 	// Compute direction for circular wave
 	// w[0].D = -normalize(position.xz - w[0].C);
-	for(int i = 1; i < SIZE; i++){
-		w[i].D = -normalize(position.xz - w[i].C);
-	}
+	// for(int i = 1; i < SIZE; i++){
+	// 	w[i].D = -normalize(position.xz - w[i].C);
+	// }
 	computeDamping();
 	
 	/** Using Grestner Waves **/
@@ -136,8 +136,8 @@ void main()
 	// Position.x += computePosX();
 	// Position.z += computePosZ();
 	// Position.y += computePosY();
-	// Position.x += computePosX();
-	// Position.z += computePosZ();
+	Position.x += computePosX();
+	Position.z += computePosZ();
 	Position.y += computePosY();
 	// Compute new normals
 	Normal.x = computeNormX();

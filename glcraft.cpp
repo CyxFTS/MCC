@@ -85,9 +85,9 @@ static bool select_using_depthbuffer = true;
 //#define SCX 32
 //#define SCY 16
 //#define SCZ 32
-#define SCX 30
+#define SCX 32
 #define SCY 16
-#define SCZ 30
+#define SCZ 32
 
 int blocks[CX*SCX][CY*SCY][CZ*SCZ];
 
@@ -118,7 +118,7 @@ struct vertexFormat {
 		x(tx), y(ty), z(tz), nx(tnx), ny(tny), nz(tnz), ux(tux), uy(tuy) {}
 };
 #define WAVE_AMPLITUDE 0.01f
-#define WAVE_LENGTH 0.01f
+#define WAVE_LENGTH 0.5f
 #define WAVE_SPEED 0.01f
 #define DAMPING 0.0f
 #define STEEPNESS 1.f
@@ -1252,21 +1252,29 @@ struct superchunk {
 		//w1.w *= 1.f / 150.f;
 		//w1.phi = 50.f * WAVE_SPEED * w1.w;
 		//w1.D = glm::normalize(glm::vec2(.5f, .5f));
-		w1.A *= 6; // 120
-		w1.w *= 10.f / 600.f;
-		w1.phi = 50.f * WAVE_SPEED * w1.w;
+		w1.A *= 1.1f;
+		w1.w *= 0.8f;
+		w1.phi = WAVE_SPEED * w1.w;
 		w1.D = glm::normalize(glm::vec2(.5f, .5f));
+		//w1.A *= 6; // 120
+		//w1.w *= 10.f / 600.f;
+		//w1.phi = 50.f * WAVE_SPEED * w1.w;
+		//w1.D = glm::normalize(glm::vec2(.5f, .5f));
 		// Circular 1
-		w2.A *= 11; // 110
-		w2.w = 1.f / 13.5f;
-		w2.phi = 500 * WAVE_SPEED * w2.w;
-		w2.C = glm::vec2(40.f, 40.f);
+
+		//w2.A *= 11; // 110
+		//w2.w = 1.f / 13.5f;
+		//w2.phi = 500 * WAVE_SPEED * w2.w;
+		//w2.C = glm::vec2(40.f, 40.f);
+		w2.A *= 0.6f;
+		w2.w *= 0.8f;
+		w2.phi = WAVE_SPEED * w2.w;
 		w2.D = glm::normalize(glm::vec2(.2f, .4f));
 		// Circular 2
-		w3.A *= 13; // 130
-		w3.w = 1.f / 20.f;
-		w3.phi = 300 * WAVE_SPEED * w3.w;
-		w3.C = glm::vec2(-40.f, -40.f);
+		//w3.A *= 13; // 130
+		//w3.w = 1.f / 20.f;
+		//w3.phi = 300 * WAVE_SPEED * w3.w;
+		//w3.C = glm::vec2(-40.f, -40.f);
 		w3.D = glm::normalize(glm::vec2(.1f, .9f));
 		sendWaves();
 	}
@@ -2015,7 +2023,7 @@ int main()
 		GLfloat dt = (GLfloat)glfwGetTime() - (GLfloat)firstRenderTime;
 		set_uniform(water_program, "lightPos", lightPos);
 		set_uniform(water_program, "eyePos", camera.Position);
-		set_uniform(water_program, "dt", dt);
+		set_uniform(water_program, "dt", dt/2);
 		set_uniform(water_program, "damp", DAMPING);
 		set_uniform(water_program, "Q", STEEPNESS);
 		set_uniform(water_program, "E", 3.1415926535898f);
