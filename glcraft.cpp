@@ -85,9 +85,9 @@ static bool select_using_depthbuffer = true;
 //#define SCX 32
 //#define SCY 16
 //#define SCZ 32
-#define SCX 16
+#define SCX 32
 #define SCY 16
-#define SCZ 16
+#define SCZ 32
 
 int blocks[CX*SCX][CY*SCY][CZ*SCZ];
 
@@ -1752,20 +1752,6 @@ int main()
 		glUseProgram(program);
 		glUniform3f(uniform_viewpos, camera.Position.x, camera.Position.y, camera.Position.z);
 
-<<<<<<< HEAD
-		dirlight.direction = glm::vec3(-1,-2,1);
-		//float now_time = sky.get_time_of_day();
-		//if (now_time >= 0.25f && now_time <= 0.91f)		// day
-		//{
-		//	float tmp_angle = ((now_time - 0.25f) / 0.66f) * 3.1415926535898f;
-		//	dirlight.direction = glm::vec3(-cos(tmp_angle) / sqrt(2.0f), -sin(tmp_angle), -cos(tmp_angle) / sqrt(2.0f));
-		//}
-		//else											// night
-		//{
-		//	dirlight.direction = glm::vec3(0.0f, 0.0f, 0.0f);
-		//}
-=======
-		//dirlight.direction = glm::vec3(-1,-2,1);
 		float now_time = sky.get_time_of_day();
 		if (now_time >= 0.25f && now_time <= 0.91f)		// day
 		{
@@ -1786,7 +1772,6 @@ int main()
 		{
 			dirlight.direction = glm::vec3(0.0f, 0.0f, 0.0f);
 		}
->>>>>>> 11d67cf3998d7c044c4ca76a9c1cdb1dadbac923
 		dirlight.UniformSet(uniform_dirlight);
 		glm::mat4 lightProjection = glm::ortho(-100.0f, 100.0f, -100.0f, 100.0f, 0.1f, 80.0f);
 		glm::vec3 lightPos = glm::normalize(-dirlight.direction);
