@@ -85,9 +85,9 @@ static bool select_using_depthbuffer = true;
 //#define SCX 32
 //#define SCY 16
 //#define SCZ 32
-#define SCX 32
+#define SCX 16
 #define SCY 16
-#define SCZ 32
+#define SCZ 16
 
 int blocks[CX*SCX][CY*SCY][CZ*SCZ];
 
@@ -119,7 +119,7 @@ struct vertexFormat {
 };
 #define WAVE_AMPLITUDE 0.01f
 #define WAVE_LENGTH 0.5f
-#define WAVE_SPEED 0.01f
+#define WAVE_SPEED 0.01f/4
 #define DAMPING 0.0f
 #define STEEPNESS 1.f
 
@@ -1761,6 +1761,16 @@ int main()
 		{
 			float tmp_angle = ((now_time - 0.25f) / 0.66f) * 3.1415926535898f;
 			dirlight.direction = glm::vec3(-cos(tmp_angle) / sqrt(2.0f), -sin(tmp_angle), -cos(tmp_angle) / sqrt(2.0f));
+			if (now_time >= 0.85f && now_time <= 0.91f)
+			{
+				dirlight.diffuse = glm::vec3(0.8f * ((0.91f - now_time) / 0.06f));
+				dirlight.specular = glm::vec3(0.1f * ((0.91f - now_time) / 0.06f));
+			}
+			else if (now_time >= 0.25f && now_time <= 0.31f)
+			{
+				dirlight.diffuse = glm::vec3(0.8f * ((now_time - 0.25f) / 0.06f));
+				dirlight.specular = glm::vec3(0.1f * ((now_time - 0.25f) / 0.06f));
+			}
 		}
 		else											// night
 		{
@@ -1869,7 +1879,7 @@ int main()
 		GLfloat dt = (GLfloat)glfwGetTime() - (GLfloat)firstRenderTime;
 		set_uniform(water_program, "lightPos", lightPos);
 		set_uniform(water_program, "eyePos", camera.Position);
-		set_uniform(water_program, "dt", dt/2);
+		set_uniform(water_program, "dt", dt*30);
 		set_uniform(water_program, "damp", DAMPING);
 		set_uniform(water_program, "Q", STEEPNESS);
 		set_uniform(water_program, "E", 3.1415926535898f);
