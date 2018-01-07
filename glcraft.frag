@@ -89,7 +89,7 @@ void main(void) {
 	float fog = clamp(exp(-fogdensity * z * z), 0.2, 1.0);
 
 	// Final color is a mix of the actual color and the fog color
-	gl_FragColor = mix(fogcolor, color, fog);
+	gl_FragColor = color;// = mix(fogcolor, color, fog);
 
 
 	if (viewPos.y < -65.5f){

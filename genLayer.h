@@ -183,7 +183,8 @@ public:
 	
 	
 };
-
+static bool allDesert = false;
+static bool allHills = false;
 class GenLayerBiome : public GenLayer
 {
 public:
@@ -206,11 +207,11 @@ public:
 					int r = rand() % 10;// random.Next(10);
 					if (r >= 0 && r < 2)
 					{
-						parentResult[i][j] = (int)Plains;
+						parentResult[i][j] = allHills ? (int)ExtremeHills : (allDesert ? (int)Desert : (int)Plains);
 					}
 					else if (r >= 2 && r < 3)
 					{
-						parentResult[i][j] = (int)Plains;
+						parentResult[i][j] = allHills ? (int)ExtremeHills : (allDesert ? (int)Desert : (int)Plains);
 					}
 					else if (r >= 3 && r < 4)
 					{

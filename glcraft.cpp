@@ -1538,21 +1538,18 @@ unsigned int loadTexture(char const * path)
 
 int main()
 {
+	cout << "Desert? (1/0)" << endl;
+	cin >> allDesert;
+	cout << "Hills? (1/0)" << endl;
+	cin >> allHills;
 	for (int x = 0; x < SCX; x++)
 		for (int z = 0; z < SCZ; z++)
 		{
 			ChunkColumnStorage chunk1 = c->Generate(x + 40, z + 10, GeneratorSettings());
-			/*for (int i = 0; i < 16; i++) {
-			for (int j = 0; j < 16; j++)
-			cout << chunk1.Biomes[j * 16 + i];
-			cout << endl;
-			}*/
 			for (int i = 0; i < 16; i++)
-			for (int j = 0; j < 16; j++)
-			for (int y = 0; y < CY*SCY; y++)
-			{
-			blocks[x*CX + i][y][z*CZ + j] = chunk1(i, y, j).Id;
-			}
+				for (int j = 0; j < 16; j++)
+					for (int y = 0; y < CY*SCY; y++)
+						blocks[x*CX + i][y][z*CZ + j] = chunk1(i, y, j).Id;
 		}
 	delete c;
 	// glfw: initialize and configure
@@ -1568,7 +1565,7 @@ int main()
 
 														 // glfw window creation
 														 // --------------------
-	GLFWwindow* window = glfwCreateWindow(SCR_WIDTH, SCR_HEIGHT, "LearnOpenGL", NULL, NULL);
+	GLFWwindow* window = glfwCreateWindow(SCR_WIDTH, SCR_HEIGHT, "GLCraft", NULL, NULL);
 	if (window == NULL)
 	{
 		std::cout << "Failed to create GLFW window" << std::endl;
@@ -1755,17 +1752,17 @@ int main()
 		glUseProgram(program);
 		glUniform3f(uniform_viewpos, camera.Position.x, camera.Position.y, camera.Position.z);
 
-		//dirlight.direction = glm::vec3(-1,-2,1);
-		float now_time = sky.get_time_of_day();
-		if (now_time >= 0.25f && now_time <= 0.91f)		// day
-		{
-			float tmp_angle = ((now_time - 0.25f) / 0.66f) * 3.1415926535898f;
-			dirlight.direction = glm::vec3(-cos(tmp_angle) / sqrt(2.0f), -sin(tmp_angle), -cos(tmp_angle) / sqrt(2.0f));
-		}
-		else											// night
-		{
-			dirlight.direction = glm::vec3(0.0f, 0.0f, 0.0f);
-		}
+		dirlight.direction = glm::vec3(-1,-2,1);
+		//float now_time = sky.get_time_of_day();
+		//if (now_time >= 0.25f && now_time <= 0.91f)		// day
+		//{
+		//	float tmp_angle = ((now_time - 0.25f) / 0.66f) * 3.1415926535898f;
+		//	dirlight.direction = glm::vec3(-cos(tmp_angle) / sqrt(2.0f), -sin(tmp_angle), -cos(tmp_angle) / sqrt(2.0f));
+		//}
+		//else											// night
+		//{
+		//	dirlight.direction = glm::vec3(0.0f, 0.0f, 0.0f);
+		//}
 		dirlight.UniformSet(uniform_dirlight);
 		glm::mat4 lightProjection = glm::ortho(-100.0f, 100.0f, -100.0f, 100.0f, 0.1f, 80.0f);
 		glm::vec3 lightPos = glm::normalize(-dirlight.direction);
