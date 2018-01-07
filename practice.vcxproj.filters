@@ -4,7 +4,6 @@
     <ClCompile Include="glad.c" />
     <ClCompile Include="glcraft.cpp" />
     <ClCompile Include="genLayer.cpp" />
-    <ClCompile Include="sky.cpp" />
   </ItemGroup>
   <ItemGroup>
     <Filter Include="头文件">
@@ -34,9 +33,6 @@
       <Filter>头文件</Filter>
     </ClInclude>
     <ClInclude Include="light.h">
-      <Filter>头文件</Filter>
-    </ClInclude>
-    <ClInclude Include="sky.h">
       <Filter>头文件</Filter>
     </ClInclude>
   </ItemGroup>

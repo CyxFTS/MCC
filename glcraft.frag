@@ -11,15 +11,15 @@ uniform vec3 viewPos;
 in vec4 texcoord;
 in vec3 normal;
 in vec4 fragPosLightSpace;
-uniform sampler2D texture;
 uniform sampler2D shadow;
+uniform sampler2D texture;
 uniform sampler2D normalMap;
 // uniform bool under_water;
 
 in VS_OUT {
     vec3 FragPos;
     vec2 TexCoords;
-	vec3 TangentLightDir;
+	vec3 TangentLightPos;
     vec3 TangentViewPos;
     vec3 TangentFragPos;
 } fs_in;
@@ -58,20 +58,18 @@ vec3 CalcDirLight(DirLight light, vec3 normal, vec3 viewDir, vec3 texColor, vec3
 
 void main(void) {
 
-	vec2 coord2d, normal2d;
+	vec2 coord2d;
 	float intensity;
 	if(texcoord.w < 0.0) {
-		coord2d = vec2((fract(texcoord.x) + texcoord.w) / 32.0, texcoord.z);
-		normal2d = vec2((fract(texcoord.x) + texcoord.w) / 32.0 + 0.5, texcoord.z);
+		coord2d = vec2((fract(texcoord.x) + texcoord.w) / 16.0, texcoord.z);
 		intensity = 1.0;
 	} else {
-		coord2d = vec2((fract(texcoord.x + texcoord.z) + texcoord.w) / 32.0, -texcoord.y);
-		normal2d = vec2((fract(texcoord.x + texcoord.z) + texcoord.w) / 32.0 + 0.5, -texcoord.y);
+		coord2d = vec2((fract(texcoord.x + texcoord.z) + texcoord.w) / 16.0, -texcoord.y);
 		intensity = 0.85;
 	}
 
 	vec3 tmp = normal;
-	vec3 normal = texture(texture, normal2d).rgb;
+	vec3 normal = texture(normalMap, coord2d).rgb;
 	normal = normalize(normal * 2.0 - 1.0);  // this normal is in tangent space
 	// If the texture index is negative, it is a top or bottom face, otherwise a side face
 	// Side faces are less bright than top faces, simulating a sun at noon

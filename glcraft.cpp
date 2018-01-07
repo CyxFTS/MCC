@@ -14,7 +14,6 @@
 #include <time.h>
 #include <generator.h>
 #include <light.h>
-#include <sky.h>
 
 void framebuffer_size_callback(GLFWwindow* window, int width, int height);
 void mouse_callback(GLFWwindow* window, double xpos, double ypos);
@@ -50,8 +49,8 @@ static GLint uniform_mvp;
 static GLint uniform_model;
 static GLint uniform_view;
 static GLint uniform_projection;
-static GLuint texture;
-static GLint uniform_texture;
+static GLuint texture, normalMap;
+static GLint uniform_texture, uniform_normalMap;
 static GLuint cursor_vbo;
 static GLint uniform_viewpos;
 static DirlightUniform uniform_dirlight;
@@ -1193,11 +1192,44 @@ struct superchunk {
 
 	void water_render(const glm::mat4 &pv, const int &whichprogram) {
 		glBindVertexArray(water_vao);
-		//glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
+		glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
 		//glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
 		glDrawElements(GL_TRIANGLES, SCZ * CZ * SPLIT * SCX * CX * SPLIT * 2 * 3, GL_UNSIGNED_INT, (GLvoid*)0);
-		//glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
+		glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
 		glBindVertexArray(0);
+	}
+
+	void create_water_texture() {
+		glGenTextures(1, &water_texture);
+		glBindTexture(GL_TEXTURE_2D, water_texture);
+		// set the texture wrapping parameters
+		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_REPEAT);	// set texture wrapping to GL_REPEAT (default wrapping method)
+		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_REPEAT);
+		// set texture filtering parameters
+		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
+		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+		// load image, create texture and generate mipmaps
+		int water_width, water_height, water_nrChannels;
+		stbi_set_flip_vertically_on_load(true); // tell stb_image.h to flip loaded texture's on the y-axis.
+												// The FileSystem::getPath(...) is part of the GitHub repository so we can find files on any IDE/platform; replace it with your own image path.
+		unsigned char *data = stbi_load("water.png", &water_width, &water_height, &water_nrChannels, 0);
+		if (data)
+		{
+			glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB, water_width, water_height, 0, GL_RGB, GL_UNSIGNED_BYTE, data);
+			glGenerateMipmap(GL_TEXTURE_2D);
+		}
+		else
+		{
+			std::cout << "Failed to load texture" << std::endl;
+		}
+		stbi_image_free(data);
+		glUseProgram(water_program);
+		glUniform1i(glGetUniformLocation(water_program, "waterTexture"), 0);
+	}
+
+	void set_water_textrue() {
+		glActiveTexture(GL_TEXTURE0);
+		glBindTexture(GL_TEXTURE_2D, water_texture);
 	}
 
 	void water_init() {
@@ -1593,10 +1625,6 @@ int main()
 	}
 	glViewport(0, 0, SCR_WIDTH, SCR_HEIGHT);
 
-	// sky
-	Sky sky;
-	sky.getReadySky();
-
 	// build and compile our shader zprogram
 	// ------------------------------------
 	program = create_program("glcraft.vert", "glcraft.frag");
@@ -1614,6 +1642,7 @@ int main()
 	uniform_viewpos = get_uniform(program, "viewPos");
 	uniform_lightspacematrix_normal = get_uniform(program, "lightSpaceMatrix");
 	uniform_texture = get_uniform(program, "texture");
+	uniform_normalMap = get_uniform(program, "normalMap");
 	uniform_shadow = get_uniform(program, "shadow");
 	uniform_dirlight.direction = get_uniform(program, "dirlight.direction");
 	uniform_dirlight.ambient = get_uniform(program, "dirlight.ambient");
@@ -1624,10 +1653,10 @@ int main()
 	dirlight.diffuse = glm::vec3(0.8f);
 	dirlight.specular = glm::vec3(.1f);
 
-	//if (uniform_mvp == -1 || uniform_viewpos == -1 ||
-	//	uniform_dirlight.direction == -1 || uniform_dirlight.ambient == -1 ||
-	//	uniform_dirlight.diffuse == -1 || uniform_dirlight.specular == -1)
-	//	return 0;
+	if (uniform_mvp == -1 || uniform_viewpos == -1 ||
+		uniform_dirlight.direction == -1 || uniform_dirlight.ambient == -1 ||
+		uniform_dirlight.diffuse == -1 || uniform_dirlight.specular == -1)
+		return 0;
 
 	/* Create and upload the texture */
 
@@ -1638,7 +1667,7 @@ int main()
 	glGenerateMipmap(GL_TEXTURE_2D);*/
 	int width, height, nrChannels;
 	// The FileSystem::getPath(...) is part of the GitHub repository so we can find files on any IDE/platform; replace it with your own image path.
-	unsigned char *data = stbi_load("texture.png", &width, &height, &nrChannels, 0);
+	unsigned char *data = stbi_load("textures.png", &width, &height, &nrChannels, 0);
 	if (data)
 	{
 		glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, width, height, 0, GL_RGBA, GL_UNSIGNED_BYTE, data);
@@ -1650,21 +1679,20 @@ int main()
 	}
 	stbi_image_free(data);
 
-	//glActiveTexture(GL_TEXTURE2);
-	/*glGenTextures(1, &normalMap);
+	//glActiveTexture(GL_TEXTURE1);
+	glGenTextures(1, &normalMap);
 	glBindTexture(GL_TEXTURE_2D, normalMap);
-	int width2, height2, nrChannels2;
-	data = stbi_load("normaltextures.png", &width2, &height2, &nrChannels2, 0);
-	if (data)
+	unsigned char *data2 = stbi_load("normaltextures.png", &width, &height, &nrChannels, 0);
+	if (data2)
 	{
-		glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, width2, height2, 0, GL_RGBA, GL_UNSIGNED_BYTE, data);
+		glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, width, height, 0, GL_RGBA, GL_UNSIGNED_BYTE, data2);
 		glGenerateMipmap(GL_TEXTURE_2D);
 	}
 	else
 	{
 		std::cout << "Failed to load texture" << std::endl;
 	}
-	stbi_image_free(data);*/
+	stbi_image_free(data2);
 
 	/* Create the world */
 
@@ -1685,7 +1713,6 @@ int main()
 
 	glUseProgram(program);
 	glUniform1i(uniform_texture, 0);
-	glUniform1i(uniform_shadow, 1);
 	glClearColor(0.6, 0.8, 1.0, 0.0);
 	glEnable(GL_CULL_FACE);
 
@@ -1727,6 +1754,10 @@ int main()
 	glReadBuffer(GL_NONE);
 	glBindFramebuffer(GL_FRAMEBUFFER, 0);
 
+	glActiveTexture(GL_TEXTURE0);
+	glUniform1i(uniform_texture, 0);
+	glBindTexture(GL_TEXTURE_2D, texture);
+
 
 	// render loop
 	// -----------
@@ -1742,7 +1773,7 @@ int main()
 		// -----
 		processInput(window);
 
-		//glBindVertexArray(VAO);
+		glBindVertexArray(VAO);
 
 		// pass projection matrix to shader (note that in this case it could change every frame)
 		glm::mat4 projection = glm::perspective(glm::radians(camera.Zoom), (float)SCR_WIDTH / (float)SCR_HEIGHT, 0.1f, 100.0f);
@@ -1751,27 +1782,10 @@ int main()
 		glm::mat4 view = camera.GetViewMatrix();
 		glm::mat4 pv = projection * view;
 
-		// render sky
-		glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
-		glEnable(GL_DEPTH_TEST);
-		glm::mat4 matrix = projection * glm::mat4(glm::mat3(view));
-		sky.renderSky(matrix);
-
-		glBindVertexArray(VAO);
 		glUseProgram(program);
 		glUniform3f(uniform_viewpos, camera.Position.x, camera.Position.y, camera.Position.z);
 
-		//dirlight.direction = glm::vec3(-1,-2,1);
-		float now_time = sky.get_time_of_day();
-		if (now_time >= 0.25f && now_time <= 0.91f)		// day
-		{
-			float tmp_angle = ((now_time - 0.25f) / 0.66f) * 3.1415926535898f;
-			dirlight.direction = glm::vec3(-cos(tmp_angle) / sqrt(2.0f), -sin(tmp_angle), -cos(tmp_angle) / sqrt(2.0f));
-		}
-		else											// night
-		{
-			dirlight.direction = glm::vec3(0.0f, 0.0f, 0.0f);
-		}
+		dirlight.direction = glm::vec3(-1,-2,1);
 		dirlight.UniformSet(uniform_dirlight);
 		glm::mat4 lightProjection = glm::ortho(-100.0f, 100.0f, -100.0f, 100.0f, 0.1f, 80.0f);
 		glm::vec3 lightPos = glm::normalize(-dirlight.direction);
@@ -1797,8 +1811,7 @@ int main()
 
 		glBindFramebuffer(GL_FRAMEBUFFER, 0);
 		glViewport(0, 0, SCR_WIDTH, SCR_HEIGHT);
-		//glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
-		glClear(GL_DEPTH_BUFFER_BIT);
+		glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 		glUseProgram(program);
 		glEnable(GL_DEPTH_TEST);
 		glEnable(GL_POLYGON_OFFSET_FILL);
@@ -1839,14 +1852,148 @@ int main()
 
 		/* Then draw chunks */
 
-		glActiveTexture(GL_TEXTURE0);
-		glBindTexture(GL_TEXTURE_2D, texture);
 		glActiveTexture(GL_TEXTURE1);
+		glUniform1i(uniform_shadow, 1);
 		glBindTexture(GL_TEXTURE_2D, depthMap);
+		glActiveTexture(GL_TEXTURE2);
+		glUniform1i(uniform_normalMap, 2);
+		glBindTexture(GL_TEXTURE_2D, normalMap);
 		
 		world->render(pv, lightSpaceMatrix, 0);
 
-		
+		/* At which voxel are we looking? */
+
+		if (select_using_depthbuffer) {
+			/* Find out coordinates of the center pixel */
+
+			float depth;
+			glReadPixels(ww / 2, wh / 2, 1, 1, GL_DEPTH_COMPONENT, GL_FLOAT, &depth);
+
+			glm::vec4 viewport = glm::vec4(0, 0, ww, wh);
+			glm::vec3 wincoord = glm::vec3(ww / 2, wh / 2, depth);
+			glm::vec3 objcoord = glm::unProject(wincoord, view, projection, viewport);
+
+			/* Find out which block it belongs to */
+
+			mx = objcoord.x;
+			my = objcoord.y;
+			mz = objcoord.z;
+			if (objcoord.x < 0)
+				mx--;
+			if (objcoord.y < 0)
+				my--;
+			if (objcoord.z < 0)
+				mz--;
+
+			/* Find out which face of the block we are looking at */
+
+			if (glm::fract(objcoord.x) < glm::fract(objcoord.y))
+				if (glm::fract(objcoord.x) < glm::fract(objcoord.z))
+					face = 0; // X
+				else
+					face = 2; // Z
+			else
+				if (glm::fract(objcoord.y) < glm::fract(objcoord.z))
+					face = 1; // Y
+				else
+					face = 2; // Z
+
+			if (face == 0 && lookat.x > 0)
+				face += 3;
+			if (face == 1 && lookat.y > 0)
+				face += 3;
+			if (face == 2 && lookat.z > 0)
+				face += 3;
+		}
+		else {
+			/* Very naive ray casting algorithm to find out which block we are looking at */
+
+			glm::vec3 testpos = position;
+			glm::vec3 prevpos = position;
+
+			for (int i = 0; i < 100; i++) {
+				/* Advance from our currect position to the direction we are looking at, in small steps */
+
+				prevpos = testpos;
+				testpos += lookat * 0.1f;
+
+				mx = floorf(testpos.x);
+				my = floorf(testpos.y);
+				mz = floorf(testpos.z);
+
+				/* If we find a block that is not air, we are done */
+
+				if (world->get(mx, my, mz))
+					break;
+			}
+
+			/* Find out which face of the block we are looking at */
+
+			int px = floorf(prevpos.x);
+			int py = floorf(prevpos.y);
+			int pz = floorf(prevpos.z);
+
+			if (px > mx)
+				face = 0;
+			else if (px < mx)
+				face = 3;
+			else if (py > my)
+				face = 1;
+			else if (py < my)
+				face = 4;
+			else if (pz > mz)
+				face = 2;
+			else if (pz < mz)
+				face = 5;
+
+			/* If we are looking at air, move the cursor out of sight */
+
+			if (!world->get(mx, my, mz))
+				mx = my = mz = 99999;
+		}
+
+		float bx = mx;
+		float by = my;
+		float bz = mz;
+
+		/* Render a box around the block we are pointing at */
+
+		float box[24][4] = {
+			{ bx + 0, by + 0, bz + 0, 14 },
+			{ bx + 1, by + 0, bz + 0, 14 },
+			{ bx + 0, by + 1, bz + 0, 14 },
+			{ bx + 1, by + 1, bz + 0, 14 },
+			{ bx + 0, by + 0, bz + 1, 14 },
+			{ bx + 1, by + 0, bz + 1, 14 },
+			{ bx + 0, by + 1, bz + 1, 14 },
+			{ bx + 1, by + 1, bz + 1, 14 },
+
+			{ bx + 0, by + 0, bz + 0, 14 },
+			{ bx + 0, by + 1, bz + 0, 14 },
+			{ bx + 1, by + 0, bz + 0, 14 },
+			{ bx + 1, by + 1, bz + 0, 14 },
+			{ bx + 0, by + 0, bz + 1, 14 },
+			{ bx + 0, by + 1, bz + 1, 14 },
+			{ bx + 1, by + 0, bz + 1, 14 },
+			{ bx + 1, by + 1, bz + 1, 14 },
+
+			{ bx + 0, by + 0, bz + 0, 14 },
+			{ bx + 0, by + 0, bz + 1, 14 },
+			{ bx + 1, by + 0, bz + 0, 14 },
+			{ bx + 1, by + 0, bz + 1, 14 },
+			{ bx + 0, by + 1, bz + 0, 14 },
+			{ bx + 0, by + 1, bz + 1, 14 },
+			{ bx + 1, by + 1, bz + 0, 14 },
+			{ bx + 1, by + 1, bz + 1, 14 },
+		};
+
+		glDisable(GL_POLYGON_OFFSET_FILL);
+		glDisable(GL_CULL_FACE);
+		glUniformMatrix4fv(uniform_mvp, 1, GL_FALSE, glm::value_ptr(pv));
+		glBindBuffer(GL_ARRAY_BUFFER, cursor_vbo);
+		glBufferData(GL_ARRAY_BUFFER, sizeof box, box, GL_DYNAMIC_DRAW);
+		glVertexAttribPointer(attribute_coord, 4, GL_FLOAT, GL_FALSE, 0, 0);
+		//glDrawArrays(GL_LINES, 0, 24);
 
 		/* Draw a cross in the center of the screen */
 
