@@ -1767,6 +1767,16 @@ int main()
 		{
 			float tmp_angle = ((now_time - 0.25f) / 0.66f) * 3.1415926535898f;
 			dirlight.direction = glm::vec3(-cos(tmp_angle) / sqrt(2.0f), -sin(tmp_angle), -cos(tmp_angle) / sqrt(2.0f));
+			if (now_time >= 0.85f && now_time <= 0.91f)
+			{
+				dirlight.diffuse = glm::vec3(0.8f * ((0.91f - now_time) / 0.06f));
+				dirlight.specular = glm::vec3(0.1f * ((0.91f - now_time) / 0.06f));
+			}
+			else if (now_time >= 0.25f && now_time <= 0.31f)
+			{
+				dirlight.diffuse = glm::vec3(0.8f * ((now_time - 0.25f) / 0.06f));
+				dirlight.specular = glm::vec3(0.1f * ((now_time - 0.25f) / 0.06f));
+			}
 		}
 		else											// night
 		{
