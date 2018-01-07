@@ -71,7 +71,7 @@ void main(void) {
 	}
 
 	vec3 tmp = normal;
-	vec3 normal = texture(texture, normal2d).rgb;
+	vec3 normal = texture2D(texture, normal2d).rgb;
 	normal = normalize(normal * 2.0 - 1.0);  // this normal is in tangent space
 	// If the texture index is negative, it is a top or bottom face, otherwise a side face
 	// Side faces are less bright than top faces, simulating a sun at noon

@@ -13,7 +13,7 @@
 #include <glm/gtc/type_ptr.hpp>
 
 #define PI 3.14159265359
-#define DAY_LENGTH 30
+#define DAY_LENGTH 50
 
 class Sky
 {
