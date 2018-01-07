@@ -1650,7 +1650,7 @@ int main()
 	uniform_dirlight.specular = get_uniform(program, "dirlight.specular");
 
 	dirlight.ambient = glm::vec3(0.1f);
-	dirlight.diffuse = glm::vec3(0.9f);
+	dirlight.diffuse = glm::vec3(0.8f);
 	dirlight.specular = glm::vec3(.1f);
 
 	if (uniform_mvp == -1 || uniform_viewpos == -1 ||
@@ -1785,7 +1785,7 @@ int main()
 		glUseProgram(program);
 		glUniform3f(uniform_viewpos, camera.Position.x, camera.Position.y, camera.Position.z);
 
-		dirlight.direction = glm::vec3(-1,-2,-1);
+		dirlight.direction = glm::vec3(-1,-2,1);
 		dirlight.UniformSet(uniform_dirlight);
 		glm::mat4 lightProjection = glm::ortho(-100.0f, 100.0f, -100.0f, 100.0f, 0.1f, 80.0f);
 		glm::vec3 lightPos = glm::normalize(-dirlight.direction);
