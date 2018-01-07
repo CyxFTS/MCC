@@ -14,7 +14,7 @@
 #include <time.h>
 #include <generator.h>
 #include <light.h>
-
+#include <sky.h>
 void framebuffer_size_callback(GLFWwindow* window, int width, int height);
 void mouse_callback(GLFWwindow* window, double xpos, double ypos);
 void scroll_callback(GLFWwindow* window, double xoffset, double yoffset);
@@ -1591,7 +1591,9 @@ int main()
 		return -1;
 	}
 	glViewport(0, 0, SCR_WIDTH, SCR_HEIGHT);
-
+	// sky
+	Sky sky;
+	sky.getReadySky();
 	// build and compile our shader zprogram
 	// ------------------------------------
 	program = create_program("glcraft.vert", "glcraft.frag");
@@ -1737,19 +1739,33 @@ int main()
 		// -----
 		processInput(window);
 
-		glBindVertexArray(VAO);
-
 		// pass projection matrix to shader (note that in this case it could change every frame)
 		glm::mat4 projection = glm::perspective(glm::radians(camera.Zoom), (float)SCR_WIDTH / (float)SCR_HEIGHT, 0.1f, 100.0f);
 		glm::mat4 model = glm::mat4(1.0f);
 		// camera/view transformation
 		glm::mat4 view = camera.GetViewMatrix();
 		glm::mat4 pv = projection * view;
+		// render sky
+		glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+		glEnable(GL_DEPTH_TEST);
+		glm::mat4 matrix = projection * glm::mat4(glm::mat3(view));
+		sky.renderSky(matrix);
 
+		glBindVertexArray(VAO);
 		glUseProgram(program);
 		glUniform3f(uniform_viewpos, camera.Position.x, camera.Position.y, camera.Position.z);
 
-		dirlight.direction = glm::vec3(-1,-2,1);
+		//dirlight.direction = glm::vec3(-1,-2,1);
+		float now_time = sky.get_time_of_day();
+		if (now_time >= 0.25f && now_time <= 0.91f)		// day
+		{
+			float tmp_angle = ((now_time - 0.25f) / 0.66f) * 3.1415926535898f;
+			dirlight.direction = glm::vec3(-cos(tmp_angle) / sqrt(2.0f), -sin(tmp_angle), -cos(tmp_angle) / sqrt(2.0f));
+		}
+		else											// night
+		{
+			dirlight.direction = glm::vec3(0.0f, 0.0f, 0.0f);
+		}
 		dirlight.UniformSet(uniform_dirlight);
 		glm::mat4 lightProjection = glm::ortho(-100.0f, 100.0f, -100.0f, 100.0f, 0.1f, 80.0f);
 		glm::vec3 lightPos = glm::normalize(-dirlight.direction);
@@ -1775,7 +1791,7 @@ int main()
 
 		glBindFramebuffer(GL_FRAMEBUFFER, 0);
 		glViewport(0, 0, SCR_WIDTH, SCR_HEIGHT);
-		glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+		glClear(GL_DEPTH_BUFFER_BIT);
 		glUseProgram(program);
 		glEnable(GL_DEPTH_TEST);
 		glEnable(GL_POLYGON_OFFSET_FILL);

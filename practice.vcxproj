@@ -117,7 +117,7 @@
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">
     <ClCompile>
       <WarningLevel>Level3</WarningLevel>
-      <Optimization>MaxSpeed</Optimization>
+      <Optimization>MinSpace</Optimization>
       <FunctionLevelLinking>true</FunctionLevelLinking>
       <IntrinsicFunctions>true</IntrinsicFunctions>
       <SDLCheck>true</SDLCheck>
@@ -152,6 +152,7 @@
     <ClCompile Include="genLayer.cpp" />
     <ClCompile Include="glad.c" />
     <ClCompile Include="glcraft.cpp" />
+    <ClCompile Include="sky.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="biome.h" />
@@ -162,6 +163,17 @@
     <ClInclude Include="genLayer.h" />
     <ClInclude Include="light.h" />
     <ClInclude Include="noise.h" />
+    <ClInclude Include="sky.h" />
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="Shaders\sky_fragment_shader.glsl" />
+    <None Include="Shaders\sky_vertex_shader.glsl" />
+  </ItemGroup>
+  <ItemGroup>
+    <Image Include="Textures\clouds1.gif" />
+    <Image Include="Textures\clouds2.gif" />
+    <Image Include="Textures\night_sky_1.png" />
+    <Image Include="Textures\sky.png" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">

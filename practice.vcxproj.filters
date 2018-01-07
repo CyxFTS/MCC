@@ -4,6 +4,7 @@
     <ClCompile Include="glad.c" />
     <ClCompile Include="glcraft.cpp" />
     <ClCompile Include="genLayer.cpp" />
+    <ClCompile Include="sky.cpp" />
   </ItemGroup>
   <ItemGroup>
     <Filter Include="头文件">
@@ -35,5 +36,16 @@
     <ClInclude Include="light.h">
       <Filter>头文件</Filter>
     </ClInclude>
+    <ClInclude Include="sky.h" />
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="Shaders\sky_fragment_shader.glsl" />
+    <None Include="Shaders\sky_vertex_shader.glsl" />
+  </ItemGroup>
+  <ItemGroup>
+    <Image Include="Textures\clouds1.gif" />
+    <Image Include="Textures\clouds2.gif" />
+    <Image Include="Textures\night_sky_1.png" />
+    <Image Include="Textures\sky.png" />
   </ItemGroup>
 </Project>
