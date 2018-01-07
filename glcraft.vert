@@ -11,11 +11,11 @@ out vec3 normal;
 out vec4 fragPosLightSpace;
 uniform mat4 model;
 uniform vec3 viewPos;
-
+uniform vec3 lightDir;
 out VS_OUT {
     vec3 FragPos;
     vec2 TexCoords;
-	vec3 TangentLightPos;
+	vec3 TangentLightDir;
     vec3 TangentViewPos;
     vec3 TangentFragPos;
 } vs_out;
@@ -25,7 +25,7 @@ void main(void) {
 	normal = vec3(0);
 	normal[int(abs(normal_kind)) - 1] = sign(normal_kind);
 	vec2 coord2d;
-	vec3 lightPos = vec3(0.5, 9999.0, 0.3);
+	
 	// If the texture index is negative, it is a top or bottom face, otherwise a side face
 	// Side faces are less bright than top faces, simulating a sun at noon
 	if(coord.w < 0.0) 
@@ -43,7 +43,7 @@ void main(void) {
     vec3 B = cross(N, T);
 
 	mat3 TBN = transpose(mat3(T, B, N));    
-	vs_out.TangentLightPos = TBN * lightPos;
+	vs_out.TangentLightDir = TBN * lightDir;
     vs_out.TangentViewPos  = TBN * viewPos;
     vs_out.TangentFragPos  = TBN * vs_out.FragPos;
 

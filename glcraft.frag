@@ -9,7 +9,6 @@ uniform DirLight dirlight;
 uniform int enableFxAA;
 uniform vec3 viewPos;
 in vec4 texcoord;
-in vec3 normal;
 in vec4 fragPosLightSpace;
 uniform sampler2D shadow;
 uniform sampler2D texture;
@@ -19,7 +18,7 @@ uniform sampler2D normalMap;
 in VS_OUT {
     vec3 FragPos;
     vec2 TexCoords;
-	vec3 TangentLightPos;
+	vec3 TangentLightDir;
     vec3 TangentViewPos;
     vec3 TangentFragPos;
 } fs_in;
@@ -32,21 +31,21 @@ float ShadowCalculation(vec4 fragPosLightSpace, vec3 normal, vec3 direction, vec
 	projCoord = projCoord * 0.5 + 0.5;
 	float currentDepth = projCoord.z > 1 ? 0 : projCoord.z;
 	float bias = 0.0008;//max(0.0001 * (1 - dot(normal, direction)), 0.000001);
-	float shadowCal = 0;// = currentDepth - bias >texture2D(shadow, projCoord.xy).r ? 1 : 0;//= 0;
-	for(int x = -1; x <= 1; ++x){
-		for(int y = -1; y <= 1; ++y){
-			float closetDepth = texture2D(shadow, projCoord.xy + vec2(x, y) * pixelSize).r;
-			shadowCal += currentDepth - bias > closetDepth ? 1 : 0;
-		}
-	}
-	return shadowCal / 9.0;
-	//return shadowCal;
+	float shadowCal  = currentDepth - bias >texture2D(shadow, projCoord.xy).r ? 1 : 0;//= 0;
+	// for(int x = -1; x <= 1; ++x){
+	// 	for(int y = -1; y <= 1; ++y){
+	// 		float closetDepth = texture2D(shadow, projCoord.xy + vec2(x, y) * pixelSize).r;
+	// 		shadowCal += currentDepth - bias > closetDepth ? 1 : 0;
+	// 	}
+	// }
+	// return shadowCal / 9.0;
+	return shadowCal;
 }
 
 vec3 CalcDirLight(DirLight light, vec3 normal, vec3 viewDir, vec3 texColor, vec3 texSpec, float shininess){
     vec3 ambient = light.ambient * texColor;
 
-    vec3 lightDir = normalize(-light.direction);
+    vec3 lightDir = normalize(-fs_in.TangentLightDir);
     float diff = max(dot(lightDir, normal), 0.0);
     vec3 diffuse = diff * texColor * light.diffuse;
 
@@ -84,7 +83,7 @@ void main(void) {
 	float fog = clamp(exp(-fogdensity * z * z), 0.2, 1.0);
 
 	// Final color is a mix of the actual color and the fog color
-	gl_FragColor = mix(fogcolor, color, fog);
+	gl_FragColor = color;
 
 	
 	if (viewPos.y < -65.5f){

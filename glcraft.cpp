@@ -1649,9 +1649,9 @@ int main()
 	uniform_dirlight.diffuse = get_uniform(program, "dirlight.diffuse");
 	uniform_dirlight.specular = get_uniform(program, "dirlight.specular");
 
-	dirlight.ambient = glm::vec3(0.2f);
-	dirlight.diffuse = glm::vec3(0.8f);
-	dirlight.specular = glm::vec3(.0f);
+	dirlight.ambient = glm::vec3(0.1f);
+	dirlight.diffuse = glm::vec3(0.9f);
+	dirlight.specular = glm::vec3(.1f);
 
 	if (uniform_mvp == -1 || uniform_viewpos == -1 ||
 		uniform_dirlight.direction == -1 || uniform_dirlight.ambient == -1 ||
@@ -1796,7 +1796,7 @@ int main()
 		lightPos += lookAtCenter;
 		glm::mat4 lightView = glm::lookAt(lightPos, lookAtCenter, glm::vec3(0, 1, 0));
 		glm::mat4 lightSpaceMatrix = lightProjection * lightView;
-
+		set_uniform(program, "lightDir", dirlight.direction);
 		glBindFramebuffer(GL_FRAMEBUFFER, depthMapFBO);
 		glViewport(0, 0, SHADOW_WIDTH, SHADOW_HEIGHT);
 		glClear(GL_DEPTH_BUFFER_BIT);
