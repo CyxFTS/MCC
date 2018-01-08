@@ -172,13 +172,19 @@ struct vertexFormat {
 	vertexFormat(float tx, float ty, float tz, float tnx, float tny, float tnz, float tux, float tuy) :
 		x(tx), y(ty), z(tz), nx(tnx), ny(tny), nz(tnz), ux(tux), uy(tuy) {}
 };
-#define WAVE_AMPLITUDE 5.0f
-#define WAVE_LENGTH 0.02f
+//O(1)优化
+//#define WAVE_AMPLITUDE 5.0f
+//#define WAVE_LENGTH 0.02f
+//#define WAVE_SPEED 0.01f
+//#define DAMPING 0.0f
+//#define STEEPNESS 1.f
+#define WAVE_AMPLITUDE 0.05f
+#define WAVE_LENGTH 0.5f
 #define WAVE_SPEED 0.01f
 #define DAMPING 0.0f
 #define STEEPNESS 1.f
 
-#define SPLIT 2
+#define SPLIT 1
 
 struct Wave {
 	GLfloat A = WAVE_AMPLITUDE;
@@ -2069,7 +2075,7 @@ int main()
 		GLfloat dt = (GLfloat)glfwGetTime() - (GLfloat)firstRenderTime;
 		set_uniform(water_program, "lightPos", lightPos);
 		set_uniform(water_program, "eyePos", camera.Position);
-		set_uniform(water_program, "dt", dt*100);
+		set_uniform(water_program, "dt", dt*10);//O(1)优化
 		set_uniform(water_program, "damp", DAMPING);
 		set_uniform(water_program, "Q", STEEPNESS);
 		set_uniform(water_program, "E", 3.1415926535898f);
@@ -2086,7 +2092,7 @@ int main()
 		int tmpy = camera.Position.y;
 		//glm::mat4 tmodel = glm::translate(glm::mat4(1.0f), glm::vec3(camera.Position.x, camera.Position.y, camera.Position.z));
 		//glm::mat4 tmvp = pv * tmodel;
-		//std::cout << tmpx << "   " << tmpy << "  " << tmpz << std::endl;
+		std::cout << tmpx << "   " << tmpy << "  " << tmpz << std::endl;
 		int beginX = tmpx + 74 < 0 ? 0 : tmpx + 74;
 		int beginZ = tmpz + 74 < 0 ? 0 : tmpz + 74;
 		int endX = tmpx + 180 >= SCX * CX ? SCX * CX : tmpx + 180;
