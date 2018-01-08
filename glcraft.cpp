@@ -24,6 +24,59 @@ ChunkGeneratorOverWorldGrain *c = new ChunkGeneratorOverWorldGrain();
 // settings
 const unsigned int SCR_WIDTH = 800;
 const unsigned int SCR_HEIGHT = 600;
+#define flowerRX 0.685f
+#define flowerLX 0.63f
+#define flowerTY 0.002f
+#define flowerBY 0.062f
+#define itemXoff 0.0625f
+
+
+//item
+
+float Flowervertices[] = {
+	// positions                   // texture coords
+
+	0.5f,  0.5f + 0.45, 0.0f,     0.685f , 0.002f, // top right
+	0.5f, -0.5f + 0.45 , 0.0f,     0.685f , 0.062f, // bottom right
+	-0.5f, -0.5f + 0.45, 0.0f,      0.63f , 0.062f, // bottom left
+	-0.5f,  0.5f + 0.45, 0.0f,      0.63f , 0.002f,  // top left 
+	0.0f, 0.5f + 0.45, -0.5f,	   0.685f , 0.002f, // top right
+	0.0f, -0.5f + 0.45, -0.5f,   0.685f , 0.062f, // top right
+	0.0f, -0.5f + 0.45, 0.5f,	   0.63f , 0.062f, // top right
+	0.0f, 0.5f + 0.45, 0.5f,	   0.63f , 0.002f  // top right
+};
+
+float Grassvertices[] = {
+	0.5f,  0.5f + 0.45, 0.0f,     0.685f + 0.0625, 0.002f, // top right
+	0.5f, -0.5f + 0.45, 0.0f,      0.685f + 0.0625, 0.062f, // bottom right
+	-0.5f, -0.5f + 0.45, 0.0f,      0.63f + 0.0625, 0.062f, // bottom left
+	-0.5f,  0.5f + 0.45, 0.0f,      0.63f + 0.0625, 0.002f,  // top left 
+	0.0f, 0.5f + 0.45, -0.5f,	   0.685f + 0.0625, 0.002f, // top right
+	0.0f, -0.5f + 0.45, -0.5f,    0.685f + 0.0625, 0.062f, // top right
+	0.0f, -0.5f + 0.45, 0.5f,	   0.63f + 0.0625, 0.062f, // top right
+	0.0f, 0.5f + 0.45, 0.5f,	   0.63f + 0.0625, 0.002f  // top right
+};
+
+float Othervertices[] = {
+	0.5f,  0.5f + 0.45, 0.0f,     0.685f + 0.0625 + itemXoff, 0.002f, // top right
+	0.5f, -0.5f + 0.45, 0.0f,      0.685f + 0.0625 + itemXoff, 0.062f, // bottom right
+	-0.5f, -0.5f + 0.45, 0.0f,      0.63f + 0.0625 + itemXoff, 0.062f, // bottom left
+	-0.5f,  0.5f + 0.45, 0.0f,      0.63f + 0.0625 + itemXoff, 0.002f,  // top left 
+	0.0f, 0.5f + 0.45, -0.5f,	   0.685f + 0.0625 + itemXoff, 0.002f, // top right
+	0.0f, -0.5f + 0.45, -0.5f,    0.685f + 0.0625 + itemXoff, 0.062f, // top right
+	0.0f, -0.5f + 0.45, 0.5f,	   0.63f + 0.0625 + itemXoff, 0.062f, // top right
+	0.0f, 0.5f + 0.45, 0.5f,	   0.63f + 0.0625 + itemXoff, 0.002f  // top right
+};
+unsigned int indices[] = {
+	0, 1, 3, // first triangle
+	1, 2, 3,  // second triangle
+	4, 5, 7, // first triangle
+	5, 6, 7,  // second triangle
+};
+
+static GLuint itemProgram;
+static GLuint item_mvp;
+
 
 // camera
 Camera camera(glm::vec3(0.0f, 0.0f, 3.0f));
@@ -90,6 +143,8 @@ static bool select_using_depthbuffer = true;
 #define SCZ 32
 
 int blocks[CX*SCX][CY*SCY][CZ*SCZ];
+int isGround[CX*SCX][CZ*SCZ] = { 0 };
+int itemType[CX*SCX][CZ*SCZ] = { 0 };
 
 // Sea level
 #define SEALEVEL 4
@@ -1596,9 +1651,101 @@ int main()
 	program = create_program("glcraft.vert", "glcraft.frag");
 	depthProgram = create_program("simple.vert", "simple.frag");
 	depthTestProgram = create_program("simpleTexture.vert", "simpleTexture.frag");
+//itemProgram
+	itemProgram = create_program("item.vs", "item.fs");
 
 	if (program == 0 || depthProgram == 0)
 		return 0;
+//item
+	srand(time(0));
+	glUseProgram(itemProgram);
+	unsigned int item_VBO, item_VAO, item_EBO, item_VAO2, item_VBO2, item_EBO2, item_VAO3, item_VBO3, item_EBO3;
+	glGenVertexArrays(1, &item_VAO);
+	glGenBuffers(1, &item_VBO);
+	glGenBuffers(1, &item_EBO);
+
+
+	unsigned int item_texture;
+	glActiveTexture(GL_TEXTURE0);
+	glGenTextures(1, &item_texture);
+
+	glBindTexture(GL_TEXTURE_2D, item_texture); // all upcoming GL_TEXTURE_2D operations now have effect on this texture object
+												// set the texture wrapping parameters
+	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_REPEAT);	// set texture wrapping to GL_REPEAT (default wrapping method)
+	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_REPEAT);
+	// set texture filtering parameters
+	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST); // Use GL_NEAREST_MIPMAP_LINEAR if you want to use mipmaps
+	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
+	// load image, create texture and generate mipmaps
+	stbi_set_flip_vertically_on_load(false);
+	int item_width, item_height, item_nrChannels;
+	// The FileSystem::getPath(...) is part of the GitHub repository so we can find files on any IDE/platform; replace it with your own image path.
+	unsigned char *item_data = stbi_load("test2.png", &item_width, &item_height, &item_nrChannels, 0);
+	if (item_data)
+	{
+		glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, item_width, item_height, 0, GL_RGBA, GL_UNSIGNED_BYTE, item_data);
+		glGenerateMipmap(GL_TEXTURE_2D);
+	}
+	else
+	{
+		std::cout << "Failed to load texture" << std::endl;
+	}
+	stbi_image_free(item_data);
+
+	item_mvp = get_uniform(itemProgram, "itemmvp");
+	glBindVertexArray(item_VAO);
+
+	glBindBuffer(GL_ARRAY_BUFFER, item_VBO);
+	glBufferData(GL_ARRAY_BUFFER, sizeof(Flowervertices), Flowervertices, GL_STATIC_DRAW);
+
+	glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, item_EBO);
+	glBufferData(GL_ELEMENT_ARRAY_BUFFER, sizeof(indices), indices, GL_STATIC_DRAW);
+
+	glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 5 * sizeof(float), (void*)0);
+	glEnableVertexAttribArray(0);
+	glVertexAttribPointer(2, 2, GL_FLOAT, GL_FALSE, 5 * sizeof(float), (void*)(3 * sizeof(float)));
+	glEnableVertexAttribArray(2);
+	glBindBuffer(GL_ARRAY_BUFFER, 0);
+	glBindVertexArray(0);
+
+	glGenVertexArrays(1, &item_VAO2);
+	glGenBuffers(1, &item_VBO2);
+	glGenBuffers(1, &item_EBO2);
+
+	glBindVertexArray(item_VAO2);
+
+	glBindBuffer(GL_ARRAY_BUFFER, item_VBO2);
+	glBufferData(GL_ARRAY_BUFFER, sizeof(Grassvertices), Grassvertices, GL_STATIC_DRAW);
+
+	glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, item_EBO2);
+	glBufferData(GL_ELEMENT_ARRAY_BUFFER, sizeof(indices), indices, GL_STATIC_DRAW);
+
+	glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 5 * sizeof(float), (void*)0);
+	glEnableVertexAttribArray(0);
+	glVertexAttribPointer(2, 2, GL_FLOAT, GL_FALSE, 5 * sizeof(float), (void*)(3 * sizeof(float)));
+	glEnableVertexAttribArray(2);
+	glBindBuffer(GL_ARRAY_BUFFER, 0);
+	glBindVertexArray(0);
+
+	glGenVertexArrays(1, &item_VAO3);
+	glGenBuffers(1, &item_VBO3);
+	glGenBuffers(1, &item_EBO3);
+
+	glBindVertexArray(item_VAO3);
+
+	glBindBuffer(GL_ARRAY_BUFFER, item_VBO3);
+	glBufferData(GL_ARRAY_BUFFER, sizeof(Othervertices), Othervertices, GL_STATIC_DRAW);
+
+	glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, item_EBO3);
+	glBufferData(GL_ELEMENT_ARRAY_BUFFER, sizeof(indices), indices, GL_STATIC_DRAW);
+
+	glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 5 * sizeof(float), (void*)0);
+	glEnableVertexAttribArray(0);
+	glVertexAttribPointer(2, 2, GL_FLOAT, GL_FALSE, 5 * sizeof(float), (void*)(3 * sizeof(float)));
+	glEnableVertexAttribArray(2);
+	glBindBuffer(GL_ARRAY_BUFFER, 0);
+	glBindVertexArray(0);
+//item end
 
 	glUseProgram(depthProgram);
 	uniform_lightspacematrix_depth = get_uniform(depthProgram, "lightSpaceMatrix");
@@ -1720,7 +1867,49 @@ int main()
 	glDrawBuffer(GL_NONE);
 	glReadBuffer(GL_NONE);
 	glBindFramebuffer(GL_FRAMEBUFFER, 0);
-
+//item begin
+	
+	for (int x = 0; x < SCX * CX; x++) {
+		for (int z = 0; z < SCZ * CZ; z++) {
+			int maxHeight = 0;
+			for (int y = 1; y < SCY *CY; y++) {
+				if (blocks[x][y][z] == 0) {
+					if (blocks[x][y - 1][z] != 8) {
+						maxHeight = y;
+					}
+				break;
+			}
+		}
+			int select = rand() % 100;
+			if (select <= 5 && select >= 0) {
+				isGround[x][z] = maxHeight;
+				itemType[x][z] = rand() % 3;
+			}
+		}
+	}
+	/*
+	for (int x = 127; x < 128; x++) {
+		for (int z = 127; z < 128; z++) {
+			int maxHeight = 0;
+			for (int y = 1; y < SCY *CY; y++) {
+				if (blocks[x][y][z] == 0) {
+					//if (blocks[x][y - 1][z] != 8) {
+					maxHeight = y;
+					//}
+					break;
+				}
+			}
+			//int select = rand() % 100;
+			//if (select <= 5 && select >= 0) {
+			isGround[x][z] = maxHeight;
+			itemType[x][z] = rand() % 3;
+			//}
+			//if (flag) break;
+		}
+		//if (flag) break;
+	}
+	*/
+//item end
 
 	// render loop
 	// -----------
@@ -1855,7 +2044,7 @@ int main()
 			{ 0, -0.025, 0, 13 },
 			{ 0, +0.025, 0, 13 },
 		};
-
+		glBindBuffer(GL_ARRAY_BUFFER, cursor_vbo);
 		glDisable(GL_DEPTH_TEST);
 		glm::mat4 one(1);
 		glUniformMatrix4fv(uniform_mvp, 1, GL_FALSE, glm::value_ptr(one));
@@ -1885,6 +2074,56 @@ int main()
 		glEnable(GL_POLYGON_OFFSET_FILL);
 
 		world->water_render(pv, water_program);
+//item begin
+		glm::mat4 mvp;
+		int tmpx = camera.Position.x;
+		int tmpz = camera.Position.z;
+		int tmpy = camera.Position.y;
+		//glm::mat4 tmodel = glm::translate(glm::mat4(1.0f), glm::vec3(camera.Position.x, camera.Position.y, camera.Position.z));
+		//glm::mat4 tmvp = pv * tmodel;
+		std::cout << tmpx << "   " << tmpy << "  " << tmpz << std::endl;
+		int beginX = tmpx + 74 < 0 ? 0 : tmpx + 74;
+		int beginZ = tmpz + 74 < 0 ? 0 : tmpz + 74;
+		int endX = tmpx + 180 >= SCX * CX ? SCX * CX : tmpx + 180;
+		int endZ = tmpz + 180 >= SCZ * CZ ? SCZ * CZ : tmpz + 180;
+		for (int x = beginX; x < endX; x++) {
+			for (int z = beginZ; z < endZ; z++) {
+				if (isGround[x][z] != 0) {
+					glm::mat4 model = glm::translate(glm::mat4(1.0f), glm::vec3(x - 128, isGround[x][z] - 127, z - 128));
+					mvp = pv * model;
+					glUseProgram(itemProgram);
+					glActiveTexture(GL_TEXTURE0);
+					glBindTexture(GL_TEXTURE_2D, item_texture);
+					if (itemType[x][z] == 0)
+						glBindVertexArray(item_VAO);
+					else if (itemType[x][z] == 1)
+						glBindVertexArray(item_VAO2);
+					else if(itemType[x][z] == 2)
+						glBindVertexArray(item_VAO3);
+					//std::cout << itemType[x][z] << std::endl;
+					glUniformMatrix4fv(item_mvp, 1, GL_FALSE, glm::value_ptr(mvp));
+					glDrawElements(GL_TRIANGLES, 12, GL_UNSIGNED_INT, 0);
+					glBindVertexArray(0);
+					//std::cout << "true" << std::endl;
+					//std::cout << x << " " << isGround[x][z] << " " << z << std::endl;
+					//glClear(GL_DEPTH_BUFFER_BIT);
+				}
+
+				//if (flag) break;
+			}
+			//if (flag) break;
+		}
+		//glm::mat4 model = glm::translate(glm::mat4(1.0f), glm::vec3(0, 0, 0));
+
+		//mvp = pv * glm::translate(glm::mat4(1.0f), glm::vec3(10, -63, 0));
+		//std::cout << flag << std::endl;
+		//glUniformMatrix4fv(item_mvp, 1, GL_FALSE, glm::value_ptr(one)); 
+
+		//glDrawArrays(GL_TRIANGLES, 0, sizeof(itemvertex));
+		//std::cout << sizeof(itemvertex) << std::endl;
+
+		glBindTexture(GL_TEXTURE_2D, texture);
+//item end
 
 
 		glfwSwapBuffers(window);
