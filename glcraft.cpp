@@ -172,13 +172,13 @@ struct vertexFormat {
 	vertexFormat(float tx, float ty, float tz, float tnx, float tny, float tnz, float tux, float tuy) :
 		x(tx), y(ty), z(tz), nx(tnx), ny(tny), nz(tnz), ux(tux), uy(tuy) {}
 };
-#define WAVE_AMPLITUDE 0.01f
-#define WAVE_LENGTH 0.5f
-#define WAVE_SPEED 0.01f/4
+#define WAVE_AMPLITUDE 5.0f
+#define WAVE_LENGTH 0.02f
+#define WAVE_SPEED 0.01f
 #define DAMPING 0.0f
 #define STEEPNESS 1.f
 
-#define SPLIT 1
+#define SPLIT 2
 
 struct Wave {
 	GLfloat A = WAVE_AMPLITUDE;
@@ -2069,7 +2069,7 @@ int main()
 		GLfloat dt = (GLfloat)glfwGetTime() - (GLfloat)firstRenderTime;
 		set_uniform(water_program, "lightPos", lightPos);
 		set_uniform(water_program, "eyePos", camera.Position);
-		set_uniform(water_program, "dt", dt*30);
+		set_uniform(water_program, "dt", dt*100);
 		set_uniform(water_program, "damp", DAMPING);
 		set_uniform(water_program, "Q", STEEPNESS);
 		set_uniform(water_program, "E", 3.1415926535898f);
