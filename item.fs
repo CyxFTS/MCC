@@ -1,22 +1,33 @@
 #version 330 core
 out vec4 FragColor;
-
+struct DirLight{
+    vec3 direction;
+    vec3 ambient;
+    vec3 diffuse;
+    vec3 specular;
+};
+uniform DirLight dirlight;
 in vec3 ourColor;
 in vec2 TexCoord;
 
 uniform sampler2D itemTexture;
+vec3 CalcDirLight(DirLight light, vec3 normal, vec3 viewDir, vec3 texColor, vec3 texSpec, float shininess){
+    vec3 ambient = light.ambient * texColor;
 
+    vec3 lightDir = normalize(-light.direction);
+    float diff = max(dot(lightDir, normal), 0.0);
+    vec3 diffuse = diff * texColor * light.diffuse;
+
+    vec3 reflectDir = normalize(reflect(-lightDir, normal));
+    float spec = pow(max(dot(reflectDir, viewDir), 0.0), shininess);
+    vec3 specular = light.specular * spec * texSpec;
+    return ambient + (diffuse + specular);
+}
 void main()
 {
-	FragColor = texture(itemTexture, TexCoord);
-	//vec2 thisTexCoord;// = (0.685, 0.001);
-	//if(TexCoord.w < 0.0) {
-	//	thisTexCoord = vec2((fract(TexCoord.x) + TexCoord.w) / 16.0, TexCoord.z);
-		//intensity = 1.0;
-	//} else {
-	//	thisTexCoord = vec2((fract(TexCoord.x + TexCoord.z) + TexCoord.w) / 16.0, -TexCoord.y);
-		//intensity = 0.85;
-	//}
-
-    //FragColor = texture(itemTexture, thisTexCoord);
+	vec3 normal = vec3(0,1,0);
+	vec4 color = texture(itemTexture, TexCoord);
+	vec3 viewDir = normalize(-dirlight.direction);
+	color.xyz = CalcDirLight(dirlight, normal, viewDir, color.xyz, vec3(0.3), 32);
+	FragColor = color;
 }

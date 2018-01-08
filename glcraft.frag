@@ -65,8 +65,8 @@ void main(void) {
 		normal2d = vec2((fract(texcoord.x) + texcoord.w) / 32.0 + 0.5, texcoord.z);
 		intensity = 1.0;
 	} else {
-		coord2d = vec2((fract(texcoord.x + texcoord.z) + texcoord.w) / 32.0, texcoord.y);
-		normal2d = vec2((fract(texcoord.x + texcoord.z) + texcoord.w) / 32.0 + 0.5, texcoord.y);
+		coord2d = vec2((fract(texcoord.x + texcoord.z) + texcoord.w) / 32.0, -texcoord.y);
+		normal2d = vec2((fract(texcoord.x + texcoord.z) + texcoord.w) / 32.0 + 0.5, -texcoord.y);
 		intensity = 0.85;
 	}
 

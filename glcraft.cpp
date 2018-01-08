@@ -106,7 +106,7 @@ static GLuint texture;
 static GLint uniform_texture;
 static GLuint cursor_vbo;
 static GLint uniform_viewpos;
-static DirlightUniform uniform_dirlight;
+static DirlightUniform uniform_dirlight, uniform_dirlight2;
 static GLint uniform_lightspacematrix_normal;
 static GLint uniform_lightspacematrix_depth;
 static GLint uniform_shadow;
@@ -1761,6 +1761,11 @@ int main()
 	uniform_dirlight.diffuse = get_uniform(program, "dirlight.diffuse");
 	uniform_dirlight.specular = get_uniform(program, "dirlight.specular");
 
+	uniform_dirlight2.direction = get_uniform(itemProgram, "dirlight.direction");
+	uniform_dirlight2.ambient = get_uniform(itemProgram, "dirlight.ambient");
+	uniform_dirlight2.diffuse = get_uniform(itemProgram, "dirlight.diffuse");
+	uniform_dirlight2.specular = get_uniform(itemProgram, "dirlight.specular");
+
 	dirlight.ambient = glm::vec3(0.1f);
 	dirlight.diffuse = glm::vec3(0.8f);
 	dirlight.specular = glm::vec3(.1f);
@@ -2092,6 +2097,7 @@ int main()
 					glm::mat4 model = glm::translate(glm::mat4(1.0f), glm::vec3(x - 256, isGround[x][z] - 128, z - 256));
 					mvp = pv * model;
 					glUseProgram(itemProgram);
+					dirlight.UniformSet(uniform_dirlight2);
 					glActiveTexture(GL_TEXTURE0);
 					glBindTexture(GL_TEXTURE_2D, item_texture);
 					if (itemType[x][z] == 0)
