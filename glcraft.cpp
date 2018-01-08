@@ -172,7 +172,7 @@ struct vertexFormat {
 	vertexFormat(float tx, float ty, float tz, float tnx, float tny, float tnz, float tux, float tuy) :
 		x(tx), y(ty), z(tz), nx(tnx), ny(tny), nz(tnz), ux(tux), uy(tuy) {}
 };
-#define WAVE_AMPLITUDE 5.0f
+#define WAVE_AMPLITUDE 0.01f
 #define WAVE_LENGTH 0.02f
 #define WAVE_SPEED 0.01f
 #define DAMPING 0.0f
@@ -1597,10 +1597,13 @@ int main()
 	cin >> allDesert;
 	cout << "Hills? (1/0)" << endl;
 	cin >> allHills;
+	int posx, posy;
+	cout << "position (x z) recomand: (-10, 10) (40, 10)" << endl;
+	cin >> posx >> posy;
 	for (int x = 0; x < SCX; x++)
 		for (int z = 0; z < SCZ; z++)
 		{
-			ChunkColumnStorage chunk1 = c->Generate(x + 40, z + 10, GeneratorSettings());
+			ChunkColumnStorage chunk1 = c->Generate(x + posx, z + posy, GeneratorSettings());
 			for (int i = 0; i < 16; i++)
 				for (int j = 0; j < 16; j++)
 					for (int y = 0; y < CY*SCY; y++)
@@ -2069,7 +2072,7 @@ int main()
 		GLfloat dt = (GLfloat)glfwGetTime() - (GLfloat)firstRenderTime;
 		set_uniform(water_program, "lightPos", lightPos);
 		set_uniform(water_program, "eyePos", camera.Position);
-		set_uniform(water_program, "dt", dt*100);
+		set_uniform(water_program, "dt", dt);
 		set_uniform(water_program, "damp", DAMPING);
 		set_uniform(water_program, "Q", STEEPNESS);
 		set_uniform(water_program, "E", 3.1415926535898f);
