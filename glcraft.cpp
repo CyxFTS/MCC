@@ -2086,10 +2086,10 @@ int main()
 		int beginZ = tmpz + 74 < 0 ? 0 : tmpz + 74;
 		int endX = tmpx + 180 >= SCX * CX ? SCX * CX : tmpx + 180;
 		int endZ = tmpz + 180 >= SCZ * CZ ? SCZ * CZ : tmpz + 180;
-		for (int x = beginX; x < endX; x++) {
-			for (int z = beginZ; z < endZ; z++) {
+		for (int x = 0; x < 512; x++) {
+			for (int z = 0; z < 512; z++) {
 				if (isGround[x][z] != 0) {
-					glm::mat4 model = glm::translate(glm::mat4(1.0f), glm::vec3(x - 128, isGround[x][z] - 127, z - 128));
+					glm::mat4 model = glm::translate(glm::mat4(1.0f), glm::vec3(x - 256, isGround[x][z] - 128, z - 256));
 					mvp = pv * model;
 					glUseProgram(itemProgram);
 					glActiveTexture(GL_TEXTURE0);
