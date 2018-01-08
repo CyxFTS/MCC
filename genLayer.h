@@ -205,25 +205,25 @@ public:
 				if (parentResult[i][j] == (int)Plains)
 				{
 					int r = rand() % 10;// random.Next(10);
-					if (r >= 0 && r < 2)
+					if (r >= 0 && r < 1)
 					{
 						parentResult[i][j] = allHills ? (int)ExtremeHills : (allDesert ? (int)Desert : (int)Plains);
+					}
+					else if (r >= 1 && r < 2)
+					{
+						parentResult[i][j] = (int)Desert;// = allHills ? (int)ExtremeHills : (allDesert ? (int)Desert : (int)Plains);
 					}
 					else if (r >= 2 && r < 3)
 					{
-						parentResult[i][j] = allHills ? (int)ExtremeHills : (allDesert ? (int)Desert : (int)Plains);
-					}
-					else if (r >= 3 && r < 4)
-					{
 						parentResult[i][j] = (int)ExtremeHills;
 					}
-					else if (r >= 4 && r < 6)
+					else if (r >= 3 && r < 6)
 					{
 						parentResult[i][j] = (int)Desert;
 					}
 					else if (r >= 6 && r < 8)
 					{
-						parentResult[i][j] = (int)Desert;
+						parentResult[i][j] = (int)Plains;
 					}
 				}
 			}
