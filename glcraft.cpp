@@ -1885,7 +1885,7 @@ int main()
 				break;
 			}
 		}
-			int select = rand() % 100;
+			int select = rand() % 800;
 			if (select <= 5 && select >= 0) {
 				isGround[x][z] = maxHeight;
 				itemType[x][z] = rand() % 3;
