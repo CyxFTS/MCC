@@ -2086,7 +2086,7 @@ int main()
 		int tmpy = camera.Position.y;
 		//glm::mat4 tmodel = glm::translate(glm::mat4(1.0f), glm::vec3(camera.Position.x, camera.Position.y, camera.Position.z));
 		//glm::mat4 tmvp = pv * tmodel;
-		std::cout << tmpx << "   " << tmpy << "  " << tmpz << std::endl;
+		//std::cout << tmpx << "   " << tmpy << "  " << tmpz << std::endl;
 		int beginX = tmpx + 74 < 0 ? 0 : tmpx + 74;
 		int beginZ = tmpz + 74 < 0 ? 0 : tmpz + 74;
 		int endX = tmpx + 180 >= SCX * CX ? SCX * CX : tmpx + 180;

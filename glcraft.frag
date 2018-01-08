@@ -31,7 +31,8 @@ float ShadowCalculation(vec4 fragPosLightSpace, vec3 normal, vec3 direction, vec
 	vec3 projCoord = fragPosLightSpace.xyz / fragPosLightSpace.w;
 	projCoord = projCoord * 0.5 + 0.5;
 	float currentDepth = projCoord.z > 1 ? 0 : projCoord.z;
-	float bias = 0.0008;//max(0.0001 * (1 - dot(normal, direction)), 0.000001);
+	float cosND = dot(normal, direction);
+	float bias = max(0.0045 * (1 - cosND * cosND), 0.0008);
 	float shadowCal = 0;// = currentDepth - bias >texture2D(shadow, projCoord.xy).r ? 1 : 0;//= 0;
 	for(int x = -1; x <= 1; ++x){
 		for(int y = -1; y <= 1; ++y){
