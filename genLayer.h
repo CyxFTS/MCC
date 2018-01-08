@@ -223,7 +223,7 @@ public:
 					}
 					else if (r >= 6 && r < 8)
 					{
-						parentResult[i][j] = (int)Desert;
+						parentResult[i][j] = (int)Plains;
 					}
 				}
 			}
